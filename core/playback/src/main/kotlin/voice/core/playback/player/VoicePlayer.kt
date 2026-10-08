@@ -63,19 +63,26 @@ class VoicePlayer(
       reason: Int,
     ) {
       if (reason == DISCONTINUITY_REASON_AUTO_TRANSITION) {
-        pauseAndDisableSleepTimerIfEndOfChapter()
+        pauseAndDisableSleepTimerIfChapterFinished(finishedChapterIndex = oldPosition.mediaItemIndex)
       }
     }
 
     override fun onPlaybackStateChanged(playbackState: Int) {
       if (playbackState == STATE_ENDED) {
-        pauseAndDisableSleepTimerIfEndOfChapter()
+        pauseAndDisableSleepTimerIfChapterFinished(finishedChapterIndex = player.currentMediaItemIndex)
       }
     }
 
-    private fun pauseAndDisableSleepTimerIfEndOfChapter() {
-      if (sleepTimer.state.value !is SleepTimerState.Enabled.WithEndOfChapter) return
-      Logger.v("Pausing due to EndOfChapter")
+    private fun pauseAndDisableSleepTimerIfChapterFinished(finishedChapterIndex: Int) {
+      val shouldPause = when (val state = sleepTimer.state.value) {
+        SleepTimerState.Enabled.WithEndOfChapter -> true
+        is SleepTimerState.Enabled.AfterChapter -> finishedChapterIndex >= state.chapterIndex
+        is SleepTimerState.Enabled.WithDuration,
+        SleepTimerState.Disabled,
+        -> false
+      }
+      if (!shouldPause) return
+      Logger.v("Pausing due to sleep timer after finishing chapter $finishedChapterIndex")
       sleepTimer.disable()
       player.pause()
       player.playbackPosition()?.let { position ->

@@ -14,6 +14,7 @@ internal class SleepTimerTracker(private val analytics: Analytics) {
           "mode",
           when (mode) {
             SleepTimerMode.EndOfChapter -> "end_of_chapter"
+            is SleepTimerMode.AfterChapter -> "after_chapter"
             SleepTimerMode.TimedWithDefault -> "timed_with_default"
             is SleepTimerMode.TimedWithDuration -> "timed_with_duration"
           },

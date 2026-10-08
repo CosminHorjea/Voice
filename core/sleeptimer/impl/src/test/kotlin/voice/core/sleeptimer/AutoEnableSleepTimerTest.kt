@@ -39,6 +39,7 @@ class AutoEnableSleepTimerMinimalTest {
         is TimedWithDuration -> SleepTimerState.Enabled.WithDuration(mode.duration)
         SleepTimerMode.TimedWithDefault -> SleepTimerState.Enabled.WithDuration(5.seconds)
         SleepTimerMode.EndOfChapter -> SleepTimerState.Enabled.WithEndOfChapter
+        is SleepTimerMode.AfterChapter -> SleepTimerState.Enabled.AfterChapter(mode.chapterIndex)
       }
     }
   }

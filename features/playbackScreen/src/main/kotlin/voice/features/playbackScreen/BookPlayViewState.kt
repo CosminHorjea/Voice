@@ -60,6 +60,9 @@ data class BookPlayViewState(
       data object WithEndOfChapter : Enabled
 
       @JvmInline
+      value class AfterChapter(val chapterNumber: Int) : Enabled
+
+      @JvmInline
       value class WithDuration(val leftDuration: Duration) : Enabled
     }
   }

@@ -149,7 +149,28 @@ internal fun sleepTimerEnd(
     } else {
       SleepTimerEnd.EndOfChapter
     }
+    is SleepTimerState.Enabled.AfterChapter -> if (playing && book != null) {
+      val leftUntilChapterEnd = leftUntilEndOfChapter(book, state.chapterIndex).milliseconds
+      SleepTimerEnd.At((now + (leftUntilChapterEnd / book.content.playbackSpeed.atSpeed()).toJavaDuration()).roundToMinute())
+    } else {
+      null
+    }
   }
+}
+
+private fun leftUntilEndOfChapter(
+  book: Book,
+  chapterIndex: Int,
+): Long {
+  val marks = book.chapters.flatMap { chapter -> chapter.chapterMarks.map { chapter to it } }
+  val currentIndex = marks.indexOfFirst { (chapter, mark) -> chapter == book.currentChapter && mark == book.currentMark }
+  if (currentIndex < 0 || chapterIndex < currentIndex) return 0
+  return marks.subList(currentIndex, (chapterIndex + 1).coerceAtMost(marks.size))
+    .mapIndexed { offset, (_, mark) ->
+      val start = if (offset == 0) book.content.positionInChapter else mark.startMs
+      (mark.endMs - start).coerceAtLeast(0)
+    }
+    .sum()
 }
 
 /** The current book is on the shelf even before it was started, as it's what plays next. */

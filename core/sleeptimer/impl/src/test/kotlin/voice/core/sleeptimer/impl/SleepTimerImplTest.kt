@@ -104,6 +104,14 @@ class SleepTimerImplTest {
   }
 
   @Test
+  fun `enable with AfterChapter sets state`() = testScope.runTest {
+    sleepTimer.enable(SleepTimerMode.AfterChapter(chapterIndex = 3))
+
+    advanceTimeBy(1)
+    assertEquals(expected = SleepTimerState.Enabled.AfterChapter(chapterIndex = 3), actual = sleepTimer.state.value)
+  }
+
+  @Test
   fun `disable cancels timer and resets state`() = testScope.runTest {
     sleepTimer.enable(SleepTimerMode.TimedWithDuration(5.seconds))
     advanceTimeBy(1.seconds)

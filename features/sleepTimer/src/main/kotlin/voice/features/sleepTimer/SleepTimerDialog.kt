@@ -30,11 +30,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialShapes
@@ -53,6 +57,7 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,8 +88,10 @@ fun SleepTimerDialog(
   onDecrementSleepTime: () -> Unit,
   onAcceptSleepTime: (Int) -> Unit,
   onAcceptSleepAtEndOfChapter: () -> Unit,
+  onAcceptSleepAfterChapter: (chapterIndex: Int) -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  var showChapters by rememberSaveable { mutableStateOf(false) }
   ModalBottomSheet(
     modifier = modifier,
     onDismissRequest = onDismiss,
@@ -93,13 +100,40 @@ fun SleepTimerDialog(
       enabledValues = setOf(Hidden, Expanded),
     ),
   ) {
-    Column(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 24.dp)
-        .padding(bottom = 32.dp),
-      horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    if (showChapters) {
+      ChapterPicker(
+        chapters = viewState.chapters,
+        onChapterClick = onAcceptSleepAfterChapter,
+      )
+    } else {
+      SleepTimerOptions(
+        viewState = viewState,
+        onIncrementSleepTime = onIncrementSleepTime,
+        onDecrementSleepTime = onDecrementSleepTime,
+        onAcceptSleepTime = onAcceptSleepTime,
+        onAcceptSleepAtEndOfChapter = onAcceptSleepAtEndOfChapter,
+        onShowChapters = { showChapters = true },
+      )
+    }
+  }
+}
+
+@Composable
+private fun SleepTimerOptions(
+  viewState: SleepTimerViewState,
+  onIncrementSleepTime: () -> Unit,
+  onDecrementSleepTime: () -> Unit,
+  onAcceptSleepTime: (Int) -> Unit,
+  onAcceptSleepAtEndOfChapter: () -> Unit,
+  onShowChapters: () -> Unit,
+) {
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .padding(horizontal = 24.dp)
+      .padding(bottom = 32.dp),
+    horizontalAlignment = Alignment.CenterHorizontally,
+  ) {
       Text(
         modifier = Modifier.fillMaxWidth(),
         text = stringResource(id = StringsR.string.sleep_timer_dialog_title),
@@ -200,6 +234,14 @@ fun SleepTimerDialog(
         Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
         Text(text = stringResource(id = StringsR.string.sleep_timer_end_of_chapter))
       }
+      if (viewState.chapters.isNotEmpty()) {
+        ListItem(
+          modifier = Modifier.clickable(onClick = onShowChapters),
+          colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        ) {
+          Text(text = stringResource(id = StringsR.string.sleep_timer_after_chapter_select))
+        }
+      }
       Spacer(modifier = Modifier.height(16.dp))
       Text(
         modifier = Modifier.fillMaxWidth(),
@@ -209,7 +251,6 @@ fun SleepTimerDialog(
         textAlign = TextAlign.Center,
       )
     }
-  }
 }
 
 @Composable
@@ -273,6 +314,37 @@ private fun PresetButton(
         color = contentColor,
       )
     }
+  }
+}
+
+@Composable
+private fun ChapterPicker(
+  chapters: List<SleepTimerViewState.Chapter>,
+  onChapterClick: (chapterIndex: Int) -> Unit,
+) {
+  Column {
+    Text(
+      modifier = Modifier
+        .padding(horizontal = 16.dp)
+        .fillMaxWidth(),
+      text = stringResource(id = StringsR.string.sleep_timer_after_chapter_title),
+      style = MaterialTheme.typography.headlineSmall,
+      textAlign = TextAlign.Center,
+    )
+    Spacer(modifier = Modifier.size(16.dp))
+    LazyColumn {
+      items(chapters, key = { it.index }) { chapter ->
+        ListItem(
+          modifier = Modifier.clickable { onChapterClick(chapter.index) },
+          colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+          leadingContent = { Text(text = chapter.number.toString()) },
+          trailingContent = { Text(text = chapter.listeningTime) },
+        ) {
+          Text(text = chapter.name)
+        }
+      }
+    }
+    Spacer(modifier = Modifier.size(32.dp))
   }
 }
 

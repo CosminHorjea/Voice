@@ -15,6 +15,12 @@ sealed interface SleepTimerState {
   sealed interface Enabled : SleepTimerState {
     data object WithEndOfChapter : Enabled
 
+    /**
+     * Playback pauses once the chapter at [chapterIndex] (a flattened chapter mark index) has finished.
+     */
+    @JvmInline
+    value class AfterChapter(val chapterIndex: Int) : Enabled
+
     @JvmInline
     value class WithDuration(val leftDuration: Duration) : Enabled
   }
@@ -30,4 +36,5 @@ sealed interface SleepTimerMode {
   data class TimedWithDuration(val duration: Duration) : SleepTimerMode
   data object TimedWithDefault : SleepTimerMode
   object EndOfChapter : SleepTimerMode
+  data class AfterChapter(val chapterIndex: Int) : SleepTimerMode
 }

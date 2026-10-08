@@ -247,7 +247,7 @@ class BookPlayViewModel(
       val customTime = it.customSleepTime
       val newTime = customTime + 1
       sleepTimerPreferenceStore.updateData { preference -> preference.copy(duration = newTime.minutes) }
-      SleepTimerViewState(newTime)
+      it.copy(customSleepTime = newTime)
     }
   }
 
@@ -258,7 +258,7 @@ class BookPlayViewModel(
       sleepTimerPreferenceStore.updateData { preference ->
         preference.copy(duration = newTime.minutes)
       }
-      SleepTimerViewState(newTime)
+      it.copy(customSleepTime = newTime)
     }
   }
 
@@ -284,13 +284,20 @@ class BookPlayViewModel(
     }
   }
 
+  fun onAcceptSleepAfterChapter(chapterIndex: Int) {
+    updateSleepTimeViewState {
+      sleepTimer.enable(SleepTimerMode.AfterChapter(chapterIndex))
+      null
+    }
+  }
+
   private fun updateSleepTimeViewState(update: suspend (SleepTimerViewState) -> SleepTimerViewState?) {
     scope.launch {
       val current = dialogState.value
       val updated: SleepTimerViewState? = if (current is BookPlayDialogViewState.SleepTimer) {
         update(current.viewState)
       } else {
-        update(SleepTimerViewState(sleepTimerPreferenceStore.data.first().duration.inWholeMinutes.toInt()))
+        update(initialSleepTimerViewState())
       }
       dialogState.value = updated?.let(BookPlayDialogViewState::SleepTimer)
     }
@@ -453,12 +460,38 @@ class BookPlayViewModel(
         sleepTimer.disable()
         dialogState.value = null
       } else {
-        dialogState.value = BookPlayDialogViewState.SleepTimer(
-          viewState = SleepTimerViewState(
-            customSleepTime = sleepTimerPreferenceStore.data.first().duration.inWholeMinutes.toInt(),
-          ),
-        )
+        dialogState.value = BookPlayDialogViewState.SleepTimer(initialSleepTimerViewState())
       }
+    }
+  }
+
+  private suspend fun initialSleepTimerViewState(): SleepTimerViewState {
+    return SleepTimerViewState(
+      customSleepTime = sleepTimerPreferenceStore.data.first().duration.inWholeMinutes.toInt(),
+      chapters = currentBook()?.let(::remainingSleepTimerChapters) ?: emptyList(),
+    )
+  }
+
+  private fun remainingSleepTimerChapters(book: Book): List<SleepTimerViewState.Chapter> {
+    val chapters = book.chapters.flatMap { chapter ->
+      chapter.chapterMarks.map { mark -> chapter to mark }
+    }
+    if (chapters.size <= 1) return emptyList()
+    val currentIndex = chapters.indexOfFirst { (chapter, mark) ->
+      chapter == book.currentChapter && mark == book.currentMark
+    }.coerceAtLeast(0)
+    val playbackSpeed = book.content.playbackSpeed.takeIf { it > 0F } ?: 1F
+    var contentUntilEndMs = 0L
+    return chapters.drop(currentIndex).mapIndexed { offset, (_, mark) ->
+      // marks end one millisecond before the next one starts
+      val markEndMs = mark.endMs + 1
+      val markStartMs = if (offset == 0) book.content.positionInChapter else mark.startMs
+      contentUntilEndMs += (markEndMs - markStartMs).coerceAtLeast(0L)
+      SleepTimerViewState.Chapter(
+        index = currentIndex + offset,
+        name = mark.name ?: "",
+        listeningTime = formatTime((contentUntilEndMs / playbackSpeed).toLong()),
+      )
     }
   }
 
@@ -503,4 +536,5 @@ private fun SleepTimerState.toViewState(): BookPlayViewState.SleepTimerViewState
   SleepTimerState.Disabled -> BookPlayViewState.SleepTimerViewState.Disabled
   is SleepTimerState.Enabled.WithDuration -> BookPlayViewState.SleepTimerViewState.Enabled.WithDuration(this.leftDuration)
   SleepTimerState.Enabled.WithEndOfChapter -> BookPlayViewState.SleepTimerViewState.Enabled.WithEndOfChapter
+  is SleepTimerState.Enabled.AfterChapter -> BookPlayViewState.SleepTimerViewState.Enabled.AfterChapter(chapterIndex + 1)
 }

@@ -67,6 +67,9 @@ class SleepTimerImpl internal constructor(
           recordEnabled(ListeningEvent.Source.App, value = null)
           state.value = SleepTimerState.Enabled.WithEndOfChapter
         }
+        is SleepTimerMode.AfterChapter -> {
+          state.value = SleepTimerState.Enabled.AfterChapter(mode.chapterIndex)
+        }
       }
     }
   }

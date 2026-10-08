@@ -123,6 +123,7 @@ fun BookPlayScreen(bookId: BookId) {
           onDecrementSleepTime = viewModel::decrementSleepTime,
           onAcceptSleepTime = viewModel::onAcceptSleepTime,
           onAcceptSleepAtEndOfChapter = viewModel::onAcceptSleepAtEndOfChapter,
+          onAcceptSleepAfterChapter = viewModel::onAcceptSleepAfterChapter,
         )
       }
     }

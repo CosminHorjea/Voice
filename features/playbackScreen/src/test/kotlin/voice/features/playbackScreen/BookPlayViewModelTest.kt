@@ -73,6 +73,7 @@ class BookPlayViewModelTest {
         is TimedWithDuration -> SleepTimerState.Enabled.WithDuration(mode.duration)
         SleepTimerMode.TimedWithDefault -> SleepTimerState.Enabled.WithDuration(runBlocking { sleepTimerDataStore.data.first() }.duration)
         SleepTimerMode.EndOfChapter -> SleepTimerState.Enabled.WithEndOfChapter
+        is SleepTimerMode.AfterChapter -> SleepTimerState.Enabled.AfterChapter(mode.chapterIndex)
       }
     }
     every {
@@ -130,7 +131,8 @@ class BookPlayViewModelTest {
   @Test
   fun sleepTimerValueChanging() = scope.runTest {
     fun assertDialogSleepTime(expected: Int) {
-      assertEquals(expected = BookPlayDialogViewState.SleepTimer(SleepTimerViewState(expected)), actual = viewModel.dialogState.value)
+      val dialogState = assertIs<BookPlayDialogViewState.SleepTimer>(viewModel.dialogState.value)
+      assertEquals(expected = expected, actual = dialogState.viewState.customSleepTime)
     }
 
     viewModel.toggleSleepTimer()
@@ -169,6 +171,33 @@ class BookPlayViewModelTest {
     verify(exactly = 1) {
       sleepTimer.enable(TimedWithDuration(10.minutes))
     }
+  }
+
+  @Test
+  fun sleepTimerDialogOffersCurrentAndLaterChapters() = scope.runTest {
+    viewModel.toggleSleepTimer()
+    yield()
+
+    val dialogState = assertIs<BookPlayDialogViewState.SleepTimer>(viewModel.dialogState.value)
+    assertEquals(
+      expected = listOf(
+        SleepTimerViewState.Chapter(index = 4, name = "Middle Section", listeningTime = "1:30"),
+        SleepTimerViewState.Chapter(index = 5, name = "Final Section", listeningTime = "2:30"),
+      ),
+      actual = dialogState.viewState.chapters,
+    )
+  }
+
+  @Test
+  fun sleepTimerAfterChapter() = scope.runTest {
+    viewModel.toggleSleepTimer()
+    viewModel.onAcceptSleepAfterChapter(chapterIndex = 5)
+    yield()
+
+    verify(exactly = 1) {
+      sleepTimer.enable(SleepTimerMode.AfterChapter(chapterIndex = 5))
+    }
+    assertEquals(expected = null, actual = viewModel.dialogState.value)
   }
 
   @Test

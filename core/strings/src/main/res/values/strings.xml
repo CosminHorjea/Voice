@@ -620,6 +620,12 @@
     <string name="shortcut.play_current.short_label">Play current</string>
     <!-- Content description for opening the sleep timer. -->
     <string name="sleep_timer.action.open">Sleep timer</string>
+    <!-- Playback status while the sleep timer stops after a chapter. %1$d is the chapter number. -->
+    <string name="sleep_timer.after_chapter.active">After chapter %1$d</string>
+    <!-- Sleep timer option that opens a list of chapters to stop playback after. -->
+    <string name="sleep_timer.after_chapter.select">After a specific chapter…</string>
+    <!-- Title of the chapter list in the sleep timer dialog. -->
+    <string name="sleep_timer.after_chapter.title">Stop after chapter</string>
     <!-- Content description for decreasing the sleep timer duration. -->
     <string name="sleep_timer.dialog.action.decrement">Shorter</string>
     <!-- Content description for increasing the sleep timer duration. -->
