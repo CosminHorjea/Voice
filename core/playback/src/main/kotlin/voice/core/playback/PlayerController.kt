@@ -8,7 +8,9 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.Util
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.guava.asDeferred
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import voice.core.data.BookId
 import voice.core.data.ChapterId
 import voice.core.data.ListeningEvent
@@ -46,6 +49,7 @@ import voice.core.playback.session.toMediaIdOrNull
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
+@SingleIn(AppScope::class)
 @Inject
 class PlayerController(
   private val context: Context,
@@ -86,6 +90,7 @@ class PlayerController(
     time: Long,
     id: ChapterId,
     type: ListeningEvent.Type = ListeningEvent.Type.Seek,
+    source: ListeningEvent.Source = ListeningEvent.Source.App,
   ) = executeAfterPrepare { controller ->
     val bookId = currentBookStoreId.data.first() ?: return@executeAfterPrepare
     val book = bookRepository.get(bookId) ?: return@executeAfterPrepare
@@ -94,7 +99,7 @@ class PlayerController(
       positionInChapterMs = time,
     )
     if (playbackItem != null) {
-      controller.record(type, to = PlaybackPosition(bookId, id, time))
+      controller.record(type, source, to = PlaybackPosition(bookId, id, time))
       controller.seekTo(playbackItem.index, playbackItem.positionInMediaItem(time))
     }
   }
@@ -109,6 +114,12 @@ class PlayerController(
         }
         controller.pause()
       }
+    }
+  }
+
+  fun pause() {
+    scope.launch {
+      awaitConnect()?.pause()
     }
   }
 
@@ -129,7 +140,7 @@ class PlayerController(
 
   fun previous() = executeAfterPrepare { controller ->
     val currentIndex = controller.currentMediaItemIndex
-    val index = if (controller.currentPosition > THRESHOLD_FOR_BACK_SEEK_MS) {
+    val index = if (controller.currentPosition > controller.maxSeekToPreviousPosition) {
       currentIndex
     } else {
       controller.previousMediaItemIndex.takeUnless { it == C.INDEX_UNSET } ?: currentIndex
@@ -284,9 +295,10 @@ class PlayerController(
     it.volume = volume
   }
 
-  suspend fun livePlaybackState(bookId: BookId? = null): LivePlaybackState? {
-    val controller = awaitConnect() ?: return null
-    return controller.livePlaybackStateSnapshot(bookId)
+  // the controller only answers on the main thread
+  suspend fun livePlaybackState(bookId: BookId? = null): LivePlaybackState? = withContext(Dispatchers.Main.immediate) {
+    val controller = awaitConnect() ?: return@withContext null
+    controller.livePlaybackStateSnapshot(bookId)
   }
 
   fun livePlaybackStateFlow(bookId: BookId? = null): Flow<LivePlaybackState?> = callbackFlow {
@@ -371,8 +383,6 @@ class PlayerController(
     }
   }
 }
-
-private const val THRESHOLD_FOR_BACK_SEEK_MS = 2000
 
 /**
  * Skipping back restarts the current chapter when it already played for a while, or when there is no chapter

@@ -9,19 +9,23 @@ import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import voice.core.data.BookId
+import voice.core.data.isRemote
 import voice.core.data.repo.BookRepository
 import voice.core.logging.api.Logger
 import voice.core.scanner.MediaScanTrigger
 import voice.features.bookOverview.bottomSheet.BottomSheetItem
 import voice.features.bookOverview.bottomSheet.BottomSheetItemViewModel
-import voice.features.bookOverview.di.BookOverviewScope
+import voice.features.bookOverview.di.BookActionsScope
+import voice.navigation.Destination
+import voice.navigation.Navigator
 
-@SingleIn(BookOverviewScope::class)
-@ContributesIntoSet(BookOverviewScope::class)
+@SingleIn(BookActionsScope::class)
+@ContributesIntoSet(BookActionsScope::class)
 class DeleteBookViewModel(
   private val application: Application,
   private val mediaScanTrigger: MediaScanTrigger,
   private val repo: BookRepository,
+  private val navigator: Navigator,
 ) : BottomSheetItemViewModel {
 
   private val scope = MainScope()
@@ -30,6 +34,8 @@ class DeleteBookViewModel(
   internal val state: State<DeleteBookViewState?> get() = _state
 
   override suspend fun items(bookId: BookId): List<BottomSheetItem> {
+    // Voice never deletes files on a server
+    if (bookId.isRemote) return emptyList()
     return listOf(BottomSheetItem.DeleteBook)
   }
 
@@ -74,7 +80,10 @@ class DeleteBookViewModel(
         val uri = state.id.toUri()
         val documentFile = DocumentFile.fromSingleUri(application, uri)
         scope.launch {
-          documentFile?.delete()
+          if (documentFile?.delete() == true) {
+            // the player of a deleted book would be left without a book
+            navigator.remove(Destination.Playback(state.id))
+          }
           mediaScanTrigger.scan(restartIfScanning = true)
         }
       }

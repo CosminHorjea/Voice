@@ -7,13 +7,14 @@ import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import voice.core.data.BookId
+import voice.core.data.isRemote
 import voice.core.data.repo.BookRepository
 import voice.features.bookOverview.bottomSheet.BottomSheetItem
 import voice.features.bookOverview.bottomSheet.BottomSheetItemViewModel
-import voice.features.bookOverview.di.BookOverviewScope
+import voice.features.bookOverview.di.BookActionsScope
 
-@SingleIn(BookOverviewScope::class)
-@ContributesIntoSet(BookOverviewScope::class)
+@SingleIn(BookActionsScope::class)
+@ContributesIntoSet(BookActionsScope::class)
 class EditBookTitleViewModel(private val repo: BookRepository) : BottomSheetItemViewModel {
 
   private val scope = MainScope()
@@ -22,6 +23,8 @@ class EditBookTitleViewModel(private val repo: BookRepository) : BottomSheetItem
   internal val state: State<EditBookTitleState?> get() = _state
 
   override suspend fun items(bookId: BookId): List<BottomSheetItem> {
+    // server books take their names from the server
+    if (bookId.isRemote) return emptyList()
     return listOf(BottomSheetItem.Title)
   }
 

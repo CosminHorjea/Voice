@@ -126,6 +126,7 @@ class BookPlayViewModelTest {
     kioskModeFeatureFlag = MemoryFeatureFlag(false),
     historyRecorder = historyRecorder,
     clock = clock,
+    serverLibrary = FakeServerLibrary(),
   )
 
   @Test
@@ -524,6 +525,7 @@ class BookPlayViewModelTest {
       kioskModeFeatureFlag = MemoryFeatureFlag(kioskMode),
       historyRecorder = historyRecorder,
       clock = clock,
+      serverLibrary = FakeServerLibrary(),
     )
   }
 }
