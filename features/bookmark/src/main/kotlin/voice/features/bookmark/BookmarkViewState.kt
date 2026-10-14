@@ -14,11 +14,17 @@ internal data class BookmarkViewState(
   val bookBar: BookBarViewState?,
   val sort: BookmarkSort,
   val categories: List<CategoryCount>,
-  val selectedCategory: BookmarkCategory?,
+  val selectedCategory: Bookmark.Kind?,
   val items: List<BookmarkListItem>,
   val totalCount: Int,
   val editor: BookmarkEditorViewState?,
+  val tab: BookmarkTab,
 )
+
+internal enum class BookmarkTab {
+  Bookmarks,
+  History,
+}
 
 @Immutable
 internal data class BookBarViewState(
@@ -37,34 +43,10 @@ internal enum class BookmarkSort {
   Recent,
 }
 
-/**
- * What a bookmark is about. Bookmarks the sleep timer set are their own category, whatever their
- * kind.
- */
-internal enum class BookmarkCategory {
-  Note,
-  Favorite,
-  Quote,
-  Revisit,
-  Sleep,
-}
-
 internal data class CategoryCount(
-  val category: BookmarkCategory,
+  val kind: Bookmark.Kind,
   val count: Int,
 )
-
-internal val Bookmark.category: BookmarkCategory
-  get() = if (setBySleepTimer) {
-    BookmarkCategory.Sleep
-  } else {
-    when (kind) {
-      Bookmark.Kind.Note -> BookmarkCategory.Note
-      Bookmark.Kind.Favorite -> BookmarkCategory.Favorite
-      Bookmark.Kind.Quote -> BookmarkCategory.Quote
-      Bookmark.Kind.Revisit -> BookmarkCategory.Revisit
-    }
-  }
 
 /** Where an item sits in its group of connected items. */
 internal data class GroupPosition(
@@ -106,7 +88,6 @@ internal const val YOU_ARE_HERE_KEY = "you-are-here"
 internal data class BookmarkRowViewState(
   val id: Bookmark.Id,
   val kind: Bookmark.Kind,
-  val setBySleepTimer: Boolean,
   val note: String?,
   val chapterNumber: Int,
   val chapterName: String?,
@@ -123,9 +104,6 @@ internal data class BookmarkEditorViewState(
   val isNew: Boolean,
   val note: String,
   val kind: Bookmark.Kind,
-  val setBySleepTimer: Boolean,
-  /** The bookmark was set by the sleep timer, so it can stay a "Dozed off" one. */
-  val wasSetBySleepTimer: Boolean,
   val chapterNumber: Int,
   val chapterName: String?,
   /** False for a book with a single chapter. */

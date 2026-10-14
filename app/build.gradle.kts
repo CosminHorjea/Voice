@@ -168,7 +168,6 @@ dependencies {
   implementation(projects.navigation)
   implementation(projects.core.sleeptimer.api)
   implementation(projects.core.sleeptimer.impl)
-  implementation(projects.features.sleepTimer)
   implementation(projects.features.settings)
   implementation(projects.features.folderPicker)
   implementation(projects.features.bookOverview)
@@ -211,17 +210,9 @@ dependencies {
 
   implementation(libs.androidxCore)
 
-  testImplementation(libs.junit)
-  testImplementation(libs.mockk)
-
   implementation(libs.media3.exoplayer)
   implementation(libs.media3.session)
 
-  testImplementation(libs.androidX.test.runner)
-  testImplementation(libs.androidX.test.junit)
-  testImplementation(libs.androidX.test.core)
-  testImplementation(libs.robolectric)
-  testImplementation(libs.coroutines.test)
   testImplementation(kotlin("reflect"))
 
   debugImplementation(libs.compose.ui.testManifest)

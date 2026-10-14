@@ -1,6 +1,6 @@
 package voice.features.playbackScreen.view
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -13,10 +13,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.compose.ui.unit.dp
 import voice.core.data.BookId
-import voice.core.data.Bookmark
 import voice.core.ui.AuroraBackground
-import voice.core.ui.BookBarPin
 import voice.core.ui.CoverTheme
 import voice.core.ui.VoiceTheme
 import voice.core.ui.rememberAnimationClock
@@ -30,7 +29,6 @@ import kotlin.time.Duration.Companion.seconds
 internal fun BookPlayView(
   viewState: BookPlayViewState,
   bookId: BookId,
-  useLandscapeLayout: Boolean,
   onPlayClick: () -> Unit,
   onRewindClick: () -> Unit,
   onFastForwardClick: () -> Unit,
@@ -51,7 +49,9 @@ internal fun BookPlayView(
   snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
   val clock = rememberAnimationClock(running = viewState.playing)
-  Box(Modifier.fillMaxSize()) {
+  BoxWithConstraints(Modifier.fillMaxSize()) {
+    // split screen panes are often wider than tall, but too narrow or too short for a cover next to the controls
+    val sideBySide = maxWidth > maxHeight && maxWidth >= 600.dp && maxHeight >= 360.dp
     AuroraBackground(
       clock = { clock.value },
       showStars = viewState.sleepTimerState is BookPlayViewState.SleepTimerViewState.Enabled,
@@ -64,7 +64,7 @@ internal fun BookPlayView(
         SnackbarHost(hostState = snackbarHostState)
       },
       topBar = {
-        if (!useLandscapeLayout) {
+        if (!sideBySide) {
           PlaybackTopBar(
             showChapters = viewState.showPreviousNextButtons,
             onCloseClick = onCloseClick,
@@ -79,7 +79,7 @@ internal fun BookPlayView(
           viewState = viewState,
           bookId = bookId,
           clock = { clock.value },
-          useLandscapeLayout = useLandscapeLayout,
+          sideBySide = sideBySide,
           onPlayClick = onPlayClick,
           onRewindClick = onRewindClick,
           onFastForwardClick = onFastForwardClick,
@@ -131,7 +131,6 @@ private fun BookPlayPreview(
         onCurrentChapterClick = {},
         onJumpBack = {},
         onJumpBackExpire = {},
-        useLandscapeLayout = false,
       )
     }
   }
@@ -158,13 +157,6 @@ private class BookPlayViewStatePreviewProvider : PreviewParameterProvider<BookPl
       bookDuration = 9.hours + 30.minutes,
       chapterSegments = List(12) { 1F / 12 },
       skipSeconds = 20,
-      bookmarkPins = listOf(
-        BookBarPin(position = 0.12F, kind = Bookmark.Kind.Favorite, setBySleepTimer = false),
-        BookBarPin(position = 0.38F, kind = Bookmark.Kind.Quote, setBySleepTimer = false),
-        BookBarPin(position = 0.39F, kind = Bookmark.Kind.Note, setBySleepTimer = true),
-        BookBarPin(position = 0.8F, kind = Bookmark.Kind.Revisit, setBySleepTimer = false),
-      ),
-      poppedPin = null,
       jumpBack = BookPlayViewState.JumpBackViewState(
         id = 1,
         time = "34:18",
@@ -188,7 +180,6 @@ private class BookPlayViewStatePreviewProvider : PreviewParameterProvider<BookPl
         chapterCount = 1,
         chapterNumber = 1,
         chapterSegments = listOf(1F),
-        bookmarkPins = emptyList(),
         jumpBack = null,
       ),
     )

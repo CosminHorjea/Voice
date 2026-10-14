@@ -17,9 +17,7 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
@@ -27,19 +25,20 @@ import kotlinx.coroutines.test.runTest
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
 import voice.core.data.Book
+import voice.core.data.BookContent
 import voice.core.data.BookId
 import voice.core.data.Chapter
 import voice.core.data.ChapterId
 import voice.core.data.ChapterMark
 import voice.core.data.ListeningEvent
 import voice.core.data.MarkData
+import voice.core.data.repo.ListeningHistoryRepo
 import voice.core.logging.api.LogWriter
 import voice.core.logging.api.Logger
 import voice.core.playback.MemoryDataStore
 import voice.core.playback.history.CommandSourceResolver
 import voice.core.playback.history.ListeningHistoryRecorder
 import voice.core.playback.history.PlaybackPosition
-import voice.core.playback.history.RecordingRepo
 import voice.core.playback.session.MediaItemProvider
 import voice.core.playback.session.realChapterId
 import voice.core.playback.session.search.book
@@ -54,6 +53,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.uuid.Uuid
 
 @RunWith(AndroidJUnit4::class)
@@ -76,6 +76,7 @@ class VoicePlayerTest {
 
   private val seekTimeStore = MemoryDataStore(2)
   private val autoRewindAmountStore = MemoryDataStore(2)
+  private val lastPlaybackSpeedStore = MemoryDataStore(1F)
 
   private val internalPlayer = TestExoPlayerBuilder(ApplicationProvider.getApplicationContext())
     .setMaxSeekToPreviousPositionMs(2_000)
@@ -105,21 +106,26 @@ class VoicePlayerTest {
   private val scope = TestScope()
   private val mediaItemProvider = MediaItemProvider(mockk(), mockk(), mockk(), mockk(), mockk(), mockk())
   private val bookId = BookId(Uuid.random().toString())
+  private val currentBookStore = MemoryDataStore<BookId?>(bookId)
   private lateinit var currentBook: Book
   private val sleepTimer = FakeSleepTimer()
-  private val historyRepo = RecordingRepo()
+  private val historyEvents = mutableListOf<ListeningEvent>()
+  private val historyRepo = mockk<ListeningHistoryRepo> {
+    coEvery { add(capture(historyEvents)) } just Runs
+  }
   private val chapterMarkPlayer = ChapterMarkPlayer(internalPlayer, mediaItemProvider)
   private val player = VoicePlayer(
     player = chapterMarkPlayer,
     repo = mockk {
       coEvery { get(bookId) } answers { currentBook }
-      coEvery { updateBook(any(), any()) } just Runs
+      coEvery { updateBook(bookId, any()) } answers {
+        currentBook = currentBook.update(secondArg<(BookContent) -> BookContent>())
+      }
     },
-    currentBookStoreId = mockk {
-      every { data } returns flowOf(bookId)
-    },
+    currentBookStoreId = currentBookStore,
     seekTimeStore = seekTimeStore,
     autoRewindAmountStore = autoRewindAmountStore,
+    lastPlaybackSpeedStore = lastPlaybackSpeedStore,
     scope = scope,
     volumeGain = mockk(relaxed = true),
     sleepTimer = sleepTimer,
@@ -323,6 +329,76 @@ class VoicePlayerTest {
   }
 
   @Test
+  fun `setBook starts a book that was never played at the last speed and keeps it`() = scope.runTest {
+    lastPlaybackSpeedStore.updateData { 1.5F }
+
+    setMediaItems(listOf(chapter(ChapterMark(startMs = 0, endMs = 20_000, name = null))))
+
+    assertEquals(expected = 1.5F, actual = internalPlayer.playbackParameters.speed)
+    assertEquals(expected = 1.5F, actual = currentBook.content.playbackSpeed)
+  }
+
+  @Test
+  fun `setBook starts a played book at its own speed`() = scope.runTest {
+    lastPlaybackSpeedStore.updateData { 1.5F }
+
+    setMediaItems(
+      listOf(chapter(ChapterMark(startMs = 0, endMs = 20_000, name = null))),
+      playbackSpeed = 1.25F,
+      lastPlayedAt = Instant.ofEpochSecond(1),
+    )
+
+    assertEquals(expected = 1.25F, actual = internalPlayer.playbackParameters.speed)
+    assertEquals(expected = 1.25F, actual = currentBook.content.playbackSpeed)
+  }
+
+  @Test
+  fun `playing marks the book that plays as played, not the current one`() = scope.runTest {
+    setMediaItems(listOf(chapter(ChapterMark(startMs = 0, endMs = 20_000, name = null))))
+    currentBookStore.updateData { BookId("a book that was only opened") }
+
+    player.play()
+    runCurrent()
+
+    assertNotEquals(illegal = Instant.EPOCH, actual = currentBook.content.lastPlayedAt)
+  }
+
+  @Test
+  fun `playing remembers the speed for new books`() = scope.runTest {
+    setMediaItems(
+      listOf(chapter(ChapterMark(startMs = 0, endMs = 20_000, name = null))),
+      playbackSpeed = 1.75F,
+      lastPlayedAt = Instant.ofEpochSecond(1),
+    )
+
+    player.play()
+    runCurrent()
+
+    assertEquals(expected = 1.75F, actual = lastPlaybackSpeedStore.data.first())
+  }
+
+  @Test
+  fun `changing the speed remembers it for new books`() = scope.runTest {
+    setMediaItems(listOf(chapter(ChapterMark(startMs = 0, endMs = 20_000, name = null))))
+
+    player.setPlaybackSpeed(1.25F)
+    runCurrent()
+
+    assertEquals(expected = 1.25F, actual = lastPlaybackSpeedStore.data.first())
+  }
+
+  @Test
+  fun `loading a book does not change the speed for new books`() = scope.runTest {
+    setMediaItems(
+      listOf(chapter(ChapterMark(startMs = 0, endMs = 20_000, name = null))),
+      playbackSpeed = 1.75F,
+      lastPlayedAt = Instant.ofEpochSecond(1),
+    )
+
+    assertEquals(expected = 1F, actual = lastPlaybackSpeedStore.data.first())
+  }
+
+  @Test
   fun `end of chapter sleep timer pauses at start of next chapter mark`() = scope.runTest {
     setMediaItems(
       listOf(
@@ -398,11 +474,11 @@ class VoicePlayerTest {
 
     assertEquals(
       expected = listOf(ListeningEvent.Type.SleepTimerEnded to ListeningEvent.Source.SleepTimer),
-      actual = historyRepo.events.map { it.type to it.source },
+      actual = historyEvents.map { it.type to it.source },
     )
     assertEquals(
       expected = PlaybackPosition(bookId, chapter.id, 1_000),
-      actual = historyRepo.events.single().let { PlaybackPosition(it.bookId, it.chapterId, it.time) },
+      actual = historyEvents.single().let { PlaybackPosition(it.bookId, it.chapterId, it.time) },
     )
   }
 
@@ -428,49 +504,6 @@ class VoicePlayerTest {
     scope.advanceUntilIdle()
 
     assertEquals(expected = SleepTimerState.Enabled.WithEndOfChapter, actual = sleepTimer.state.value)
-  }
-
-  @Test
-  fun `after chapter sleep timer pauses once the selected chapter finished`() = scope.runTest {
-    setMediaItems(
-      listOf(
-        chapter(
-          ChapterMark(startMs = 0, endMs = 1_000, name = null),
-          ChapterMark(startMs = 1_000, endMs = 2_000, name = null),
-        ),
-        chapter(ChapterMark(startMs = 0, endMs = 1_000, name = null)),
-      ),
-    )
-
-    player.prepare()
-    awaitReady()
-    sleepTimer.enable(SleepTimerMode.AfterChapter(chapterIndex = 1))
-
-    TestPlayerRunHelper.play(internalPlayer).untilPlayWhenReadyIs(false)
-
-    player.shouldHavePosition(2, 0)
-    assertFalse(player.playWhenReady)
-    assertEquals(expected = SleepTimerState.Disabled, actual = sleepTimer.state.value)
-  }
-
-  @Test
-  fun `after chapter sleep timer pauses when the last chapter ends`() = scope.runTest {
-    setMediaItems(
-      listOf(
-        chapter(ChapterMark(startMs = 0, endMs = 1_000, name = null)),
-        chapter(ChapterMark(startMs = 0, endMs = 1_000, name = null)),
-      ),
-    )
-
-    player.prepare()
-    awaitReady()
-    sleepTimer.enable(SleepTimerMode.AfterChapter(chapterIndex = 1))
-
-    TestPlayerRunHelper.play(internalPlayer).untilPlayWhenReadyIs(false)
-
-    assertEquals(expected = Player.STATE_ENDED, actual = internalPlayer.playbackState)
-    assertFalse(player.playWhenReady)
-    assertEquals(expected = SleepTimerState.Disabled, actual = sleepTimer.state.value)
   }
 
   @Test
@@ -538,11 +571,15 @@ class VoicePlayerTest {
     chapters: List<Chapter>,
     currentChapter: Chapter = chapters.first(),
     positionInChapter: Long = 0,
+    playbackSpeed: Float = 1F,
+    lastPlayedAt: Instant = Instant.EPOCH,
   ) {
     currentBook = book(chapters, bookId).update {
       it.copy(
         currentChapter = currentChapter.id,
         positionInChapter = positionInChapter,
+        playbackSpeed = playbackSpeed,
+        lastPlayedAt = lastPlayedAt,
       )
     }
     player.setMediaItem(mediaItemProvider.mediaItem(currentBook))
@@ -603,25 +640,5 @@ class VoicePlayerTest {
     assertEquals(expected = currentMediaItemIndex, actual = this.currentMediaItemIndex)
     assertEquals(expected = currentPosition, actual = this.currentPosition)
     return this
-  }
-
-  private class FakeSleepTimer : SleepTimer {
-    override val state: StateFlow<SleepTimerState>
-      get() = stateFlow
-
-    private val stateFlow = MutableStateFlow<SleepTimerState>(SleepTimerState.Disabled)
-
-    override fun enable(mode: SleepTimerMode) {
-      stateFlow.value = when (mode) {
-        is SleepTimerMode.TimedWithDuration -> SleepTimerState.Enabled.WithDuration(mode.duration)
-        SleepTimerMode.TimedWithDefault -> error("TimedWithDefault is not used in these tests")
-        SleepTimerMode.EndOfChapter -> SleepTimerState.Enabled.WithEndOfChapter
-        is SleepTimerMode.AfterChapter -> SleepTimerState.Enabled.AfterChapter(mode.chapterIndex)
-      }
-    }
-
-    override fun disable() {
-      stateFlow.value = SleepTimerState.Disabled
-    }
   }
 }

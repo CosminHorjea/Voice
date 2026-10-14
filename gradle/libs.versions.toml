@@ -24,12 +24,13 @@ androidPluginForGradle = { module = "com.android.tools.build:gradle", version.re
 junit = "junit:junit:4.13.2"
 materialKolor = "com.materialkolor:material-kolor:5.0.1"
 mockk = "io.mockk:mockk:1.14.11"
-paging-runtime = "androidx.paging:paging-runtime-ktx:3.5.2"
-paging-compose = "androidx.paging:paging-compose:3.5.2"
+paging-runtime = "androidx.paging:paging-runtime-ktx:3.5.3"
+paging-compose = "androidx.paging:paging-compose:3.5.3"
 retrofit-core = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "retrofit" }
 retrofit-serialization = { module = "com.squareup.retrofit2:converter-kotlinx-serialization", version.ref = "retrofit" }
 robolectric = "org.robolectric:robolectric:4.17"
+composablePreviewScanner = "io.github.sergio-sastre.ComposablePreviewScanner:android:0.9.3"
 coil = "io.coil-kt:coil-compose:2.7.0"
 appCompat = "androidx.appcompat:appcompat:1.8.0"
 androidxCore = "androidx.core:core-ktx:1.19.1"
@@ -81,6 +82,7 @@ media3-testUtils-robolectric = { module = "androidx.media3:media3-test-utils-rob
 
 glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
 glance-material3 = { module = "androidx.glance:glance-material3", version.ref = "glance" }
+workManager = "androidx.work:work-runtime:2.12.0"
 
 lifecycle = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidx-lifecycle" }
 lifecycle-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }

@@ -11,7 +11,6 @@ import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -31,6 +30,7 @@ import voice.core.data.repo.BookRepository
 import voice.core.data.repo.BookmarkRepo
 import voice.core.data.sleeptimer.SleepTimerPreference
 import voice.core.data.store.CurrentBookStore
+import voice.core.data.store.LastPlaybackSpeedStore
 import voice.core.data.store.SeekTimeStore
 import voice.core.data.store.SleepTimerPreferenceStore
 import voice.core.featureflag.ExperimentalPlaybackPersistenceQualifier
@@ -45,14 +45,13 @@ import voice.core.playback.misc.Decibel
 import voice.core.playback.misc.VolumeGain
 import voice.core.playback.overlay
 import voice.core.playback.playstate.PlayStateManager
+import voice.core.playback.withDefaultSpeed
 import voice.core.sleeptimer.SleepTimer
 import voice.core.sleeptimer.SleepTimerMode
 import voice.core.sleeptimer.SleepTimerMode.TimedWithDuration
 import voice.core.sleeptimer.SleepTimerState
-import voice.core.ui.BookBarPin
 import voice.core.ui.formatTime
 import voice.features.playbackScreen.batteryOptimization.BatteryOptimization
-import voice.features.sleepTimer.SleepTimerViewState
 import voice.navigation.Destination
 import voice.navigation.Navigator
 import java.time.Clock
@@ -87,6 +86,8 @@ class BookPlayViewModel(
   private val historyRecorder: ListeningHistoryRecorder,
   private val clock: Clock,
   private val serverLibrary: ServerLibrary,
+  @LastPlaybackSpeedStore
+  private val lastPlaybackSpeedStore: DataStore<Float>,
   @Assisted
   private val bookId: BookId,
 ) {
@@ -98,8 +99,6 @@ class BookPlayViewModel(
 
   internal val dialogState: State<BookPlayDialogViewState?>
     field = mutableStateOf<BookPlayDialogViewState?>(null)
-
-  private val addedBookmark = mutableStateOf<Bookmark.Id?>(null)
 
   init {
     scope.launch {
@@ -113,9 +112,12 @@ class BookPlayViewModel(
     val kioskMode = remember { kioskModeFeatureFlag.get() }
     if (kioskMode) return kioskModeViewState()
 
+    val defaultSpeed = remember { lastPlaybackSpeedStore.data }.collectAsState(initial = null).value
     val persistedBook = remember(bookId) {
       bookRepository.flow(bookId).filterNotNull()
-    }.collectAsState(initial = null).value ?: return null
+    }.collectAsState(initial = null).value
+      ?.withDefaultSpeed { defaultSpeed ?: return null }
+      ?: return null
 
     val experimentalPlaybackPersistence = experimentalPlaybackPersistenceFeatureFlag.get()
     val livePlaybackState = if (experimentalPlaybackPersistence) {
@@ -149,19 +151,13 @@ class BookPlayViewModel(
     val hasMoreThanOneChapter = chapterCount > 1
     val chapterNumber = book.chapters.take(book.content.currentChapterIndex).sumOf { it.chapterMarks.count() } +
       book.currentChapter.chapterMarks.indexOf(currentMark) + 1
-    // waits for the bookmarks, so the cover doesn't shrink when their pins come in
-    val bookmarks = remember(book.id, book.content.chapters) {
-      bookmarkRepository.bookmarksFlow(book.content)
-    }.collectAsState(initial = null).value
-      ?.sortedBy { book.positionOf(it) }
-      ?: return null
     val lastJump = remember { historyRecorder.lastJump }.collectAsState().value
     val unavailableBooks = remember { serverLibrary.unavailableBooks }.collectAsState(initial = emptySet()).value
     return BookPlayViewState(
       sleepTimerState = sleepTime.toViewState(),
       playing = isPlaying,
       title = book.content.name,
-      author = book.content.author,
+      author = book.content.metadata.author,
       showPreviousNextButtons = hasMoreThanOneChapter,
       chapterName = currentMark.name.takeIf { hasMoreThanOneChapter },
       duration = currentMark.durationMs.milliseconds,
@@ -176,14 +172,6 @@ class BookPlayViewModel(
       bookDuration = book.duration.milliseconds,
       chapterSegments = book.chapterSegments(),
       skipSeconds = skipSeconds,
-      bookmarkPins = bookmarks.map { bookmark ->
-        BookBarPin(
-          position = if (book.duration > 0) book.positionOf(bookmark).toFloat() / book.duration else 0F,
-          kind = bookmark.kind,
-          setBySleepTimer = bookmark.setBySleepTimer,
-        )
-      },
-      poppedPin = addedBookmark.value?.let { added -> bookmarks.indexOfFirst { it.id == added } }?.takeIf { it >= 0 },
       jumpBack = lastJump?.let { jumpBackViewState(book, it, chapterNumber) },
       unavailable = book.id in unavailableBooks,
     )
@@ -230,13 +218,6 @@ class BookPlayViewModel(
       bookDuration = 14.hours + 27.minutes + 33.seconds,
       chapterSegments = List(24) { 1F / 24 },
       skipSeconds = DEFAULT_SKIP_SECONDS,
-      bookmarkPins = listOf(
-        BookBarPin(position = 0.15F, kind = Bookmark.Kind.Favorite, setBySleepTimer = false),
-        BookBarPin(position = 0.46F, kind = Bookmark.Kind.Quote, setBySleepTimer = false),
-        BookBarPin(position = 0.58F, kind = Bookmark.Kind.Note, setBySleepTimer = true),
-        BookBarPin(position = 0.71F, kind = Bookmark.Kind.Revisit, setBySleepTimer = false),
-      ),
-      poppedPin = null,
       jumpBack = null,
     )
   }
@@ -268,14 +249,6 @@ class BookPlayViewModel(
 
   fun onAcceptSleepTime(time: Int) {
     updateSleepTimeViewState {
-      val book = currentBook() ?: return@updateSleepTimeViewState null
-      scope.launch {
-        bookmarkRepository.addBookmarkAtBookPosition(
-          book = book,
-          setBySleepTimer = true,
-          title = null,
-        )
-      }
       sleepTimer.enable(TimedWithDuration(time.minutes))
       null
     }
@@ -391,7 +364,10 @@ class BookPlayViewModel(
 
   fun onPlaybackSpeedIconClick() {
     scope.launch {
-      val playbackSpeed = currentBook()?.content?.playbackSpeed ?: return@launch
+      val playbackSpeed = currentBook()
+        ?.withDefaultSpeed { lastPlaybackSpeedStore.data.first() }
+        ?.content?.playbackSpeed
+        ?: return@launch
       dialogState.value = BookPlayDialogViewState.SpeedDialog(playbackSpeed)
     }
   }
@@ -421,15 +397,8 @@ class BookPlayViewModel(
       val bookmark = bookmarkRepository.addBookmarkAtBookPosition(
         book = book,
         title = null,
-        setBySleepTimer = false,
       )
       viewEffectChannel.trySend(BookPlayViewEffect.BookmarkAdded(bookmark.id))
-      // the pin pops once, and not again when the screen is recreated
-      addedBookmark.value = bookmark.id
-      delay(PIN_POP_DURATION)
-      if (addedBookmark.value == bookmark.id) {
-        addedBookmark.value = null
-      }
     }
   }
 
@@ -525,13 +494,6 @@ class BookPlayViewModel(
 }
 
 private const val DEFAULT_SKIP_SECONDS = 20
-private val PIN_POP_DURATION = 2.seconds
-
-private fun Book.positionOf(bookmark: Bookmark): Long {
-  val chapterIndex = chapters.indexOfFirst { it.id == bookmark.chapterId }
-  if (chapterIndex == -1) return 0L
-  return chapters.take(chapterIndex).sumOf { it.duration } + bookmark.time
-}
 
 private fun Book.chapterSegments(): List<Float> {
   if (duration <= 0L) return emptyList()

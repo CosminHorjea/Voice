@@ -14,27 +14,22 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import voice.core.common.DispatcherProvider
-import voice.core.data.Book
-import voice.core.data.BookContent
 import voice.core.data.BookId
 import voice.core.data.Bookmark
 import voice.core.data.ListeningEvent
-import voice.core.data.repo.BookmarkRepo
 import voice.core.featureflag.MemoryFeatureFlag
 import voice.core.playback.LivePlaybackState
 import voice.core.playback.PlayerController
 import voice.core.playback.playstate.PlayStateManager
-import voice.core.sleeptimer.SleepTimer
-import voice.core.sleeptimer.SleepTimerMode
 import voice.core.sleeptimer.SleepTimerState
+import voice.core.ui.formatTime
 import voice.navigation.Navigator
 import java.time.Clock
 import kotlin.test.Test
@@ -64,6 +59,8 @@ class BookmarkViewModelTest {
   private fun viewModel(
     editBookmarkId: String? = null,
     experimentalPlaybackPersistence: Boolean = false,
+    lastPlaybackSpeed: Float = 1F,
+    historyTabOpenStore: MemoryDataStore<Boolean> = MemoryDataStore(true),
   ) = BookmarkViewModel(
     currentBookStore = MemoryDataStore<BookId?>(null),
     bookRepository = mockk {
@@ -75,12 +72,16 @@ class BookmarkViewModelTest {
     },
     playStateManager = playStateManager,
     playerController = playerController,
-    sleepTimer = DisabledSleepTimer,
+    sleepTimer = mockk {
+      every { state } returns MutableStateFlow(SleepTimerState.Disabled)
+    },
     navigator = navigator,
     clock = clock,
     dispatcherProvider = DispatcherProvider(scope.coroutineContext, scope.coroutineContext, scope.coroutineContext),
     kioskModeFeatureFlag = MemoryFeatureFlag(false),
     experimentalPlaybackPersistenceFeatureFlag = MemoryFeatureFlag(experimentalPlaybackPersistence),
+    lastPlaybackSpeedStore = MemoryDataStore(lastPlaybackSpeed),
+    historyTabOpenStore = historyTabOpenStore,
     bookId = book.id,
     editBookmarkId = editBookmarkId,
   )
@@ -101,6 +102,42 @@ class BookmarkViewModelTest {
     while (true) {
       val state = awaitItem()
       if (state != null && predicate(state)) return state
+    }
+  }
+
+  @Test
+  fun `the screen opens on the history at first`() {
+    viewModel().test {
+      assertEquals(expected = BookmarkTab.History, actual = awaitState().tab)
+    }
+  }
+
+  @Test
+  fun `picking a tab keeps it for next time`() {
+    val store = MemoryDataStore(true)
+    val viewModel = viewModel(historyTabOpenStore = store)
+    viewModel.test {
+      awaitState()
+      viewModel.onTabChange(BookmarkTab.Bookmarks)
+      awaitState { it.tab == BookmarkTab.Bookmarks }
+      scope.testScheduler.advanceUntilIdle()
+      assertEquals(expected = false, actual = store.data.first())
+    }
+  }
+
+  @Test
+  fun `the screen opens on the bookmarks when they were open last`() {
+    viewModel(historyTabOpenStore = MemoryDataStore(false)).test {
+      assertEquals(expected = BookmarkTab.Bookmarks, actual = awaitState().tab)
+    }
+  }
+
+  @Test
+  fun `a bookmark to edit opens on the bookmarks`() {
+    val bookmark = testBookmark(arrival, 1.minutes)
+    bookmarkRepo.bookmarks.value = listOf(bookmark)
+    viewModel(editBookmarkId = bookmark.id.value.toString()).test {
+      assertEquals(expected = BookmarkTab.Bookmarks, actual = awaitState().tab)
     }
   }
 
@@ -199,8 +236,8 @@ class BookmarkViewModelTest {
     val viewModel = viewModel()
     viewModel.test {
       awaitState { it.totalCount == 1 }
-      viewModel.onCategoryClick(BookmarkCategory.Favorite)
-      awaitState { it.selectedCategory == BookmarkCategory.Favorite }
+      viewModel.onCategoryClick(Bookmark.Kind.Favorite)
+      awaitState { it.selectedCategory == Bookmark.Kind.Favorite }
       viewModel.onSaveClick()
       val state = awaitState { it.editor != null && it.totalCount == 2 }
       assertNull(state.selectedCategory)
@@ -237,6 +274,15 @@ class BookmarkViewModelTest {
         playerController.setPosition(any(), any(), any())
         navigator.goBack()
       }
+    }
+  }
+
+  @Test
+  fun `the time left of a book that was never played is at the last speed`() {
+    viewModel(lastPlaybackSpeed = 2F).test {
+      // 5 of 20 minutes are left
+      val state = awaitState { it.bookBar != null }
+      assertEquals(expected = formatTime(2.5.minutes.inWholeMilliseconds), actual = state.bookBar!!.remaining)
     }
   }
 
@@ -318,26 +364,6 @@ class BookmarkViewModelTest {
     }
 
   @Test
-  fun `a sleep timer bookmark can be made dozed off again`() {
-    val bookmark = testBookmark(signal, 2.minutes, setBySleepTimer = true)
-    bookmarkRepo.bookmarks.value = listOf(bookmark)
-    val viewModel = viewModel()
-    viewModel.test {
-      awaitState { it.totalCount == 1 }
-      viewModel.onBookmarkLongClick(bookmark.id)
-      awaitState { it.editor?.setBySleepTimer == true }
-      viewModel.onKindChange(Bookmark.Kind.Favorite)
-      val favorite = awaitState { it.editor?.setBySleepTimer == false }.editor!!
-      assertTrue(favorite.wasSetBySleepTimer)
-      viewModel.onSleepKindClick()
-      awaitState { it.editor?.setBySleepTimer == true }
-      viewModel.onEditorDone()
-      awaitState { it.editor == null }
-      assertEquals(expected = listOf(bookmark), actual = bookmarkRepo.bookmarks.value)
-    }
-  }
-
-  @Test
   fun `nudging stops at the start of the chapter`() {
     val bookmark = testBookmark(signal, 10.seconds)
     bookmarkRepo.bookmarks.value = listOf(bookmark)
@@ -352,45 +378,4 @@ class BookmarkViewModelTest {
       assertNull(editor.chapterName)
     }
   }
-}
-
-private object DisabledSleepTimer : SleepTimer {
-  override val state = MutableStateFlow<SleepTimerState>(SleepTimerState.Disabled)
-  override fun enable(mode: SleepTimerMode) {}
-  override fun disable() {}
-}
-
-private class FakeBookmarkRepo(private val clock: Clock) : BookmarkRepo {
-
-  val bookmarks = MutableStateFlow<List<Bookmark>>(emptyList())
-
-  override suspend fun deleteBookmark(id: Bookmark.Id) {
-    bookmarks.update { bookmarks -> bookmarks.filterNot { it.id == id } }
-  }
-
-  override suspend fun addBookmark(bookmark: Bookmark) {
-    bookmarks.update { bookmarks -> bookmarks.filterNot { it.id == bookmark.id } + bookmark }
-  }
-
-  override suspend fun addBookmarkAtBookPosition(
-    book: Book,
-    title: String?,
-    setBySleepTimer: Boolean,
-  ): Bookmark {
-    val bookmark = Bookmark(
-      bookId = book.id,
-      chapterId = book.content.currentChapter,
-      title = title,
-      time = book.content.positionInChapter,
-      addedAt = clock.instant(),
-      setBySleepTimer = setBySleepTimer,
-      id = Bookmark.Id.random(),
-    )
-    addBookmark(bookmark)
-    return bookmark
-  }
-
-  override suspend fun bookmarks(book: BookContent): List<Bookmark> = bookmarks.value
-
-  override fun bookmarksFlow(book: BookContent): Flow<List<Bookmark>> = bookmarks
 }

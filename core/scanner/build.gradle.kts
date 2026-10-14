@@ -9,6 +9,7 @@ kotlin {
 
 dependencies {
   implementation(projects.core.data.api)
+  implementation(projects.core.documentfile)
   implementation(projects.core.initializer)
 
   implementation(libs.slf4j.noop)
@@ -19,11 +20,4 @@ dependencies {
   implementation(libs.coroutines.guava)
 
   testImplementation(projects.core.data.impl)
-  testImplementation(libs.junit)
-  testImplementation(libs.androidX.test.runner)
-  testImplementation(libs.androidX.test.core)
-  testImplementation(libs.androidX.test.junit)
-  testImplementation(libs.mockk)
-  testImplementation(libs.coroutines.test)
-  testImplementation(libs.robolectric)
 }

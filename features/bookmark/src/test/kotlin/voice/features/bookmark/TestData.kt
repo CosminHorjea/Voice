@@ -3,6 +3,7 @@ package voice.features.bookmark
 import voice.core.data.Book
 import voice.core.data.BookContent
 import voice.core.data.BookId
+import voice.core.data.BookMetadata
 import voice.core.data.Bookmark
 import voice.core.data.Chapter
 import voice.core.data.ChapterId
@@ -18,13 +19,11 @@ import kotlin.uuid.Uuid
 
 internal val testZone: ZoneId = ZoneId.of("Europe/Berlin")
 
-/** Wednesday, 7 October 2026 at the given time in [testZone]. */
 internal fun today(
   hour: Int,
   minute: Int = 0,
 ): Instant = ZonedDateTime.of(2026, 10, 7, hour, minute, 0, 0, testZone).toInstant()
 
-/** Tuesday, 6 October 2026 at the given time in [testZone]. */
 internal fun yesterday(
   hour: Int,
   minute: Int = 0,
@@ -49,23 +48,30 @@ internal fun testBook(
   positionInChapter: Duration = Duration.ZERO,
 ): Book = Book(
   content = BookContent(
-    author = "Daniel Hartwell",
-    name = "Echoes of Tomorrow",
     positionInChapter = positionInChapter.inWholeMilliseconds,
     playbackSpeed = 1F,
     addedAt = Instant.EPOCH,
     chapters = chapters.map { it.id },
-    cover = null,
     currentChapter = currentChapter,
     isActive = true,
     lastPlayedAt = Instant.EPOCH,
     skipSilence = false,
     id = BookId("echoes"),
     gain = 0F,
-    genre = null,
-    narrator = null,
-    series = null,
-    part = null,
+    metadata = BookMetadata(
+      name = "Echoes of Tomorrow",
+      author = "Daniel Hartwell",
+      album = null,
+      title = null,
+      genre = null,
+      narrator = null,
+      series = null,
+      part = null,
+      cover = null,
+      fileLastModified = null,
+    ),
+    customName = null,
+    customCover = null,
   ),
   chapters = chapters,
 )
@@ -76,14 +82,12 @@ internal fun testBookmark(
   addedAt: Instant = today(9),
   title: String? = null,
   kind: Bookmark.Kind = Bookmark.Kind.Note,
-  setBySleepTimer: Boolean = false,
 ): Bookmark = Bookmark(
   bookId = BookId("echoes"),
   chapterId = chapter.id,
   title = title,
   time = time.inWholeMilliseconds,
   addedAt = addedAt,
-  setBySleepTimer = setBySleepTimer,
   id = Bookmark.Id(Uuid.random()),
   kind = kind,
 )
@@ -97,8 +101,6 @@ internal fun testEvent(
   time: Duration,
   source: ListeningEvent.Source = ListeningEvent.Source.App,
   to: Pair<Chapter, Duration>? = null,
-  value: String? = null,
-  bookmark: Bookmark? = null,
 ): ListeningEvent = ListeningEvent(
   bookId = BookId("echoes"),
   type = type,
@@ -108,11 +110,6 @@ internal fun testEvent(
   time = time.inWholeMilliseconds,
   toChapterId = to?.first?.id,
   toTime = to?.second?.inWholeMilliseconds,
-  value = value,
-  bookmarkId = bookmark?.id,
-  bookmarkKind = bookmark?.kind,
-  bookmarkSetBySleepTimer = bookmark?.setBySleepTimer,
-  bookmarkAddedAtMillis = bookmark?.addedAt?.toEpochMilli(),
   id = nextEventId++,
 )
 

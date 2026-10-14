@@ -1,19 +1,17 @@
 package voice.core.playback.session.search
 
 import android.provider.MediaStore
-import androidx.datastore.core.DataStore
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.test.runTest
 import voice.core.data.Book
 import voice.core.data.BookContent
 import voice.core.data.BookId
+import voice.core.data.BookMetadata
 import voice.core.data.Chapter
 import voice.core.data.ChapterId
 import voice.core.data.repo.BookRepository
+import voice.core.playback.MemoryDataStore
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -44,7 +42,7 @@ class BookSearchHandlerTest {
 
   @Test
   fun unstructuredSearchByArtist() = runTest {
-    val bookSearch = VoiceSearch(query = bookToFind.content.author)
+    val bookSearch = VoiceSearch(query = bookToFind.content.metadata.author)
     assertEquals(expected = bookToFind, actual = searchHandler.handle(bookSearch))
   }
 
@@ -64,7 +62,7 @@ class BookSearchHandlerTest {
   fun mediaFocusArtist() = runTest {
     val bookSearch = VoiceSearch(
       mediaFocus = MediaStore.Audio.Artists.ENTRY_CONTENT_TYPE,
-      artist = bookToFind.content.author,
+      artist = bookToFind.content.metadata.author,
     )
     assertEquals(expected = bookToFind, actual = searchHandler.handle(bookSearch))
   }
@@ -73,8 +71,10 @@ class BookSearchHandlerTest {
   fun mediaFocusArtistInTitleNoArtistInBook() = runTest {
     val bookToFind = bookToFind.copy(
       content = bookToFind.content.copy(
-        author = null,
-        name = "The book of Tim",
+        metadata = bookToFind.content.metadata.copy(
+          author = null,
+          name = "The book of Tim",
+        ),
       ),
     )
     coEvery { repo.all() } coAnswers { listOf(bookToFind) }
@@ -91,7 +91,7 @@ class BookSearchHandlerTest {
   fun mediaFocusAlbum() = runTest {
     val bookSearch = VoiceSearch(
       mediaFocus = MediaStore.Audio.Albums.ENTRY_CONTENT_TYPE,
-      artist = bookToFind.content.author,
+      artist = bookToFind.content.metadata.author,
       album = bookToFind.content.name,
       query = null,
     )
@@ -106,23 +106,30 @@ fun book(
 ): Book {
   return Book(
     content = BookContent(
-      author = Uuid.random().toString(),
-      name = Uuid.random().toString(),
       positionInChapter = positionInChapter,
       playbackSpeed = 1F,
       addedAt = Instant.EPOCH,
       chapters = chapters.map { it.id },
-      cover = null,
       currentChapter = chapters.first().id,
       isActive = true,
       lastPlayedAt = Instant.EPOCH,
       skipSilence = false,
       id = id,
       gain = 0F,
-      genre = null,
-      narrator = null,
-      series = null,
-      part = null,
+      metadata = BookMetadata(
+        name = Uuid.random().toString(),
+        author = Uuid.random().toString(),
+        album = null,
+        title = null,
+        genre = null,
+        narrator = null,
+        series = null,
+        part = null,
+        cover = null,
+        fileLastModified = null,
+      ),
+      customName = null,
+      customCover = null,
     ),
     chapters = chapters,
   )
@@ -137,15 +144,4 @@ private fun chapter(): Chapter {
     markData = emptyList(),
     fileSize = 0,
   )
-}
-
-private class MemoryDataStore<T>(initial: T) : DataStore<T> {
-
-  private val value = MutableStateFlow(initial)
-
-  override val data: Flow<T> get() = value
-
-  override suspend fun updateData(transform: suspend (t: T) -> T): T {
-    return value.updateAndGet { transform(it) }
-  }
 }

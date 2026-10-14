@@ -25,6 +25,8 @@ import voice.core.data.ListeningEvent
 import voice.core.data.repo.BookRepository
 import voice.core.data.repo.BookmarkRepo
 import voice.core.data.store.CurrentBookStore
+import voice.core.data.store.HistoryTabOpenStore
+import voice.core.data.store.LastPlaybackSpeedStore
 import voice.core.featureflag.ExperimentalPlaybackPersistenceQualifier
 import voice.core.featureflag.FeatureFlag
 import voice.core.featureflag.KioskModeFeatureFlagQualifier
@@ -32,6 +34,7 @@ import voice.core.playback.CurrentBookResolver
 import voice.core.playback.PlayerController
 import voice.core.playback.overlay
 import voice.core.playback.playstate.PlayStateManager
+import voice.core.playback.withDefaultSpeed
 import voice.core.sleeptimer.SleepTimer
 import voice.navigation.Navigator
 import java.time.Clock
@@ -54,6 +57,10 @@ class BookmarkViewModel(
   private val kioskModeFeatureFlag: FeatureFlag<Boolean>,
   @ExperimentalPlaybackPersistenceQualifier
   private val experimentalPlaybackPersistenceFeatureFlag: FeatureFlag<Boolean>,
+  @LastPlaybackSpeedStore
+  private val lastPlaybackSpeedStore: DataStore<Float>,
+  @HistoryTabOpenStore
+  private val historyTabOpenStore: DataStore<Boolean>,
   @Assisted
   private val bookId: BookId,
   @Assisted
@@ -67,26 +74,32 @@ class BookmarkViewModel(
   internal val viewEffects: Flow<BookmarkViewEffect> = viewEffectChannel.receiveAsFlow()
 
   private var sort by mutableStateOf(BookmarkSort.Story)
-  private var selectedCategory by mutableStateOf<BookmarkCategory?>(null)
+  private var selectedCategory by mutableStateOf<Bookmark.Kind?>(null)
   private var draft by mutableStateOf<Draft?>(null)
+
+  // only once the listener picks a tab here, so that until then it follows the stored one
+  private var pickedTab by mutableStateOf<BookmarkTab?>(null)
   private var saving = false
 
   // a jump or close leaves the screen, so a second tap must not go back once more
   private var leaving = false
 
-  // the latest values, for the actions that need them
   private var book: Book? = null
   private var bookmarks: List<Bookmark> = emptyList()
 
   @Composable
   internal fun viewState(): BookmarkViewState? {
     val kioskMode = remember { kioskModeFeatureFlag.get() }
-    if (kioskMode) return kioskModeBookmarkViewState()
+    if (kioskMode) return kioskModeBookmarkViewState(tab = pickedTab ?: BookmarkTab.Bookmarks)
 
     // saved, so that the editor does not open again once the screen comes back after process death
     var openedEditorFromNavigation by rememberSaveable { mutableStateOf(false) }
+    val defaultSpeed = remember { lastPlaybackSpeedStore.data }.collectAsState(initial = null).value
+    val historyTabOpen = remember { historyTabOpenStore.data }.collectAsState(initial = null).value ?: return null
     val persistedBook = remember(bookId) { bookRepository.flow(bookId) }
-      .collectAsState(initial = null).value ?: return null
+      .collectAsState(initial = null).value
+      ?.withDefaultSpeed { defaultSpeed ?: return null }
+      ?: return null
     // with the experimental playback persistence, the stored position lags behind while playing
     val experimentalPlaybackPersistence = remember { experimentalPlaybackPersistenceFeatureFlag.get() }
     val livePlaybackState = if (experimentalPlaybackPersistence) {
@@ -112,12 +125,12 @@ class BookmarkViewModel(
     val playState by remember { playStateManager.playStateFlow }.collectAsState()
     val sleepTimerState by remember { sleepTimer.state }.collectAsState()
     val index = remember(book) { BookIndex(book) }
-    val category = selectedCategory?.takeIf { selected -> bookmarks.any { it.category == selected } }
-    val visible = if (category == null) bookmarks else bookmarks.filter { it.category == category }
+    val category = selectedCategory?.takeIf { selected -> bookmarks.any { it.kind == selected } }
+    val visible = if (category == null) bookmarks else bookmarks.filter { it.kind == category }
     val now = clock.instant()
     return BookmarkViewState(
       bookTitle = book.content.name,
-      bookAuthor = book.content.author,
+      bookAuthor = book.content.metadata.author,
       cover = book.content.coverUrl,
       playing = livePlaybackState?.isPlaying ?: (playState == PlayStateManager.PlayState.Playing),
       sleepTimerActive = sleepTimerState.enabled,
@@ -128,6 +141,12 @@ class BookmarkViewModel(
       items = bookmarkListItems(index, visible, sort, now, clock.zone),
       totalCount = bookmarks.size,
       editor = draft?.let { editorViewState(index, it) },
+      tab = pickedTab ?: when {
+        // the bookmark to edit is in the list of bookmarks
+        editBookmarkId != null -> BookmarkTab.Bookmarks
+        historyTabOpen -> BookmarkTab.History
+        else -> BookmarkTab.Bookmarks
+      },
     )
   }
 
@@ -142,8 +161,6 @@ class BookmarkViewModel(
       isNew = draft.isNew,
       note = draft.note,
       kind = draft.kind,
-      setBySleepTimer = draft.setBySleepTimer,
-      wasSetBySleepTimer = draft.bookmark.setBySleepTimer,
       chapterNumber = location.chapterNumber,
       chapterName = location.chapterName,
       showChapter = index.chapterCount > 1,
@@ -154,11 +171,18 @@ class BookmarkViewModel(
     )
   }
 
+  internal fun onTabChange(tab: BookmarkTab) {
+    pickedTab = tab
+    scope.launch {
+      historyTabOpenStore.updateData { tab == BookmarkTab.History }
+    }
+  }
+
   internal fun onSortChange(sort: BookmarkSort) {
     this.sort = sort
   }
 
-  internal fun onCategoryClick(category: BookmarkCategory?) {
+  internal fun onCategoryClick(category: Bookmark.Kind?) {
     selectedCategory = if (selectedCategory == category) null else category
   }
 
@@ -193,7 +217,6 @@ class BookmarkViewModel(
         val bookmark = bookmarkRepo.addBookmarkAtBookPosition(
           book = book,
           title = null,
-          setBySleepTimer = false,
         )
         // a filter for another kind would hide the new bookmark
         selectedCategory = null
@@ -209,12 +232,7 @@ class BookmarkViewModel(
   }
 
   internal fun onKindChange(kind: Bookmark.Kind) {
-    draft = draft?.copy(kind = kind, setBySleepTimer = false)
-  }
-
-  /** Keeps a sleep timer bookmark a "Dozed off" one. */
-  internal fun onSleepKindClick() {
-    draft = draft?.let { it.copy(kind = it.bookmark.kind, setBySleepTimer = it.bookmark.setBySleepTimer) }
+    draft = draft?.copy(kind = kind)
   }
 
   internal fun onMoveEarlier() {
@@ -239,7 +257,6 @@ class BookmarkViewModel(
     val updated = draft.bookmark.copy(
       title = draft.note.trim().takeIf { it.isNotEmpty() },
       kind = draft.kind,
-      setBySleepTimer = draft.setBySleepTimer,
       time = draft.time,
     )
     if (updated != draft.bookmark) {
@@ -249,7 +266,6 @@ class BookmarkViewModel(
     }
   }
 
-  /** Undoes saving a new bookmark. */
   internal fun onEditorUndo() {
     val draft = draft ?: return
     this.draft = null
@@ -297,7 +313,6 @@ class BookmarkViewModel(
       isNew = isNew,
       note = bookmark.title.orEmpty(),
       kind = bookmark.kind,
-      setBySleepTimer = bookmark.setBySleepTimer,
       time = bookmark.time,
     )
   }
@@ -307,7 +322,6 @@ class BookmarkViewModel(
     val isNew: Boolean,
     val note: String,
     val kind: Bookmark.Kind,
-    val setBySleepTimer: Boolean,
     val time: Long,
   )
 

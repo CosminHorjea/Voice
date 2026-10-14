@@ -41,12 +41,6 @@ public annotation class FolderPickerMovedDialogShownStore
 @Qualifier
 public annotation class AnalyticsConsentStore
 
-/**
- * The keys of the listening history suggestions the listener dismissed, oldest first.
- */
-@Qualifier
-public annotation class DismissedHistorySuggestionsStore
-
 @Qualifier
 public annotation class DeveloperMenuUnlockedStore
 
@@ -58,3 +52,19 @@ public annotation class CoverSeedColorsStore
 
 @Qualifier
 public annotation class SupporterStatusStore
+
+/**
+ * Whether the bookmarks screen had the history open last, so it opens on that tab again. It starts
+ * on the history.
+ */
+@Qualifier
+public annotation class HistoryTabOpenStore
+
+/**
+ * The speed the listener last played at or picked, which a book that was never played starts at.
+ */
+@Qualifier
+public annotation class LastPlaybackSpeedStore
+
+@Qualifier
+public annotation class LockScreenSliderStore

@@ -17,6 +17,7 @@ import voice.core.data.ListeningEvent
 import voice.core.data.repo.BookRepository
 import voice.core.data.store.AutoRewindAmountStore
 import voice.core.data.store.CurrentBookStore
+import voice.core.data.store.LastPlaybackSpeedStore
 import voice.core.data.store.SeekTimeStore
 import voice.core.logging.api.Logger
 import voice.core.playback.history.CommandSource
@@ -27,9 +28,11 @@ import voice.core.playback.history.playbackPosition
 import voice.core.playback.misc.Decibel
 import voice.core.playback.misc.VolumeGain
 import voice.core.playback.session.MediaId
+import voice.core.playback.session.bookId
 import voice.core.playback.session.playbackItemForPosition
 import voice.core.playback.session.positionInMediaItem
 import voice.core.playback.session.toMediaIdOrNull
+import voice.core.playback.withDefaultSpeed
 import voice.core.sleeptimer.SleepTimer
 import voice.core.sleeptimer.SleepTimerState
 import java.time.Instant
@@ -48,6 +51,8 @@ class VoicePlayer(
   private val seekTimeStore: DataStore<Int>,
   @AutoRewindAmountStore
   private val autoRewindAmountStore: DataStore<Int>,
+  @LastPlaybackSpeedStore
+  private val lastPlaybackSpeedStore: DataStore<Float>,
   private val scope: CoroutineScope,
   private val volumeGain: VolumeGain,
   private val sleepTimer: SleepTimer,
@@ -148,7 +153,7 @@ class VoicePlayer(
     val position = player.playbackPosition()
     scope.launch {
       val skipAmount = seekTimeStore.data.first().seconds
-      recordExternalCommand(source, ListeningEvent.Type.SkipBack, position, value = skipAmount.inWholeSeconds.toString())
+      recordExternalCommand(source, ListeningEvent.Type.SkipBack, position)
       seekBackBy(skipAmount)
     }
   }
@@ -195,7 +200,7 @@ class VoicePlayer(
     val position = player.playbackPosition()
     scope.launch {
       val skipAmount = seekTimeStore.data.first().seconds
-      recordExternalCommand(source, ListeningEvent.Type.SkipForward, position, value = skipAmount.inWholeSeconds.toString())
+      recordExternalCommand(source, ListeningEvent.Type.SkipForward, position)
 
       val currentPosition = player.currentPosition.takeUnless { it == C.TIME_UNSET }
         ?.milliseconds
@@ -258,7 +263,6 @@ class VoicePlayer(
     type: ListeningEvent.Type,
     position: PlaybackPosition?,
     to: PlaybackPosition? = null,
-    value: String? = null,
   ) {
     if (source == null || position == null) return
     historyRecorder.record(
@@ -266,8 +270,6 @@ class VoicePlayer(
       source = source.source,
       position = position,
       to = to,
-      value = value,
-      sourcePackage = source.packageName,
     )
   }
 
@@ -288,6 +290,7 @@ class VoicePlayer(
 
     if (playWhenReady) {
       updateLastPlayedAt()
+      rememberSpeed(playbackParameters.speed)
     }
     super.setPlayWhenReady(playWhenReady)
   }
@@ -311,13 +314,13 @@ class VoicePlayer(
   }
 
   private fun updateLastPlayedAt() {
+    // the book that plays, which can differ from the current book until the app loads that one
+    val bookId = player.currentMediaItem?.mediaId?.toMediaIdOrNull()?.bookId ?: return
     scope.launch {
-      currentBookStoreId.data.first()?.let { bookId ->
-        repo.updateBook(bookId) {
-          val lastPlayedAt = Instant.now()
-          Logger.v("Update ${it.name}: lastPlayedAt to $lastPlayedAt")
-          it.copy(lastPlayedAt = lastPlayedAt)
-        }
+      repo.updateBook(bookId) {
+        val lastPlayedAt = Instant.now()
+        Logger.v("Update ${it.name}: lastPlayedAt to $lastPlayedAt")
+        it.copy(lastPlayedAt = lastPlayedAt)
       }
     }
   }
@@ -371,7 +374,14 @@ class VoicePlayer(
           repo.get(mediaId.id)
         }
         if (book != null) {
-          player.setPlaybackSpeed(book.content.playbackSpeed)
+          val speed = book.withDefaultSpeed { runBlocking { lastPlaybackSpeedStore.data.first() } }.content.playbackSpeed
+          player.setPlaybackSpeed(speed)
+          if (speed != book.content.playbackSpeed) {
+            // loading the book marks it as played, so from here on this is its own speed
+            scope.launch {
+              repo.updateBook(book.id) { it.copy(playbackSpeed = speed) }
+            }
+          }
           setSkipSilenceEnabled(book.content.skipSilence)
           volumeGain.gain = Decibel(book.content.gain)
           val currentPlaybackItem = book.playbackItemForPosition(
@@ -391,15 +401,19 @@ class VoicePlayer(
   }
 
   override fun setPlaybackSpeed(speed: Float) {
-    recordExternalCommand(
-      source = commandSourceResolver.current(),
-      type = ListeningEvent.Type.SpeedChanged,
-      position = player.playbackPosition(),
-      value = speed.toString(),
-    )
     super.setPlaybackSpeed(speed)
     scope.launch {
       updateBook { it.copy(playbackSpeed = speed) }
+    }
+    rememberSpeed(speed)
+  }
+
+  /**
+   * Books that were never played start at this speed, see [withDefaultSpeed].
+   */
+  private fun rememberSpeed(speed: Float) {
+    scope.launch {
+      lastPlaybackSpeedStore.updateData { speed }
     }
   }
 

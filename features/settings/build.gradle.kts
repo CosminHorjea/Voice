@@ -9,7 +9,6 @@ dependencies {
   implementation(projects.navigation)
   implementation(projects.core.strings)
   implementation(projects.core.featureflag)
-  implementation(projects.core.playback)
   implementation(projects.core.ui)
   implementation(projects.core.remoteconfig.api)
   implementation(projects.core.data.api)
@@ -17,7 +16,4 @@ dependencies {
   implementation(projects.core.audiobookshelf)
 
   implementation(libs.androidxCore)
-
-  testImplementation(libs.molecule)
-  testImplementation(libs.turbine)
 }

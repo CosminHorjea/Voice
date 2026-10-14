@@ -32,7 +32,6 @@ dependencies {
   api(projects.core.common)
   api(projects.core.documentfile)
   implementation(projects.core.featureflag)
-  implementation(projects.core.initializer)
 
   implementation(libs.datastore)
   implementation(libs.androidxCore)
@@ -44,10 +43,4 @@ dependencies {
   ksp(libs.room.compiler)
 
   testImplementation(libs.room.testing)
-  testImplementation(libs.androidX.test.core)
-  testImplementation(libs.androidX.test.junit)
-  testImplementation(libs.androidX.test.runner)
-  testImplementation(libs.junit)
-  testImplementation(libs.robolectric)
-  testImplementation(libs.coroutines.test)
 }
