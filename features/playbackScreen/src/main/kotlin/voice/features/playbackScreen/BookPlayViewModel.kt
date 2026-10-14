@@ -506,5 +506,5 @@ private fun SleepTimerState.toViewState(): BookPlayViewState.SleepTimerViewState
   SleepTimerState.Disabled -> BookPlayViewState.SleepTimerViewState.Disabled
   is SleepTimerState.Enabled.WithDuration -> BookPlayViewState.SleepTimerViewState.Enabled.WithDuration(this.leftDuration)
   SleepTimerState.Enabled.WithEndOfChapter -> BookPlayViewState.SleepTimerViewState.Enabled.WithEndOfChapter
-  is SleepTimerState.Enabled.AfterChapter -> BookPlayViewState.SleepTimerViewState.Enabled.AfterChapter(chapterIndex + 1)
+  is SleepTimerState.Enabled.AfterChapter -> BookPlayViewState.SleepTimerViewState.Enabled.AfterChapter
 }

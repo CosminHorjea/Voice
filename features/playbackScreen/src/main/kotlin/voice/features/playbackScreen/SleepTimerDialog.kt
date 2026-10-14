@@ -37,10 +37,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -134,123 +134,123 @@ private fun SleepTimerOptions(
       .padding(bottom = 32.dp),
     horizontalAlignment = Alignment.CenterHorizontally,
   ) {
-      Text(
-        modifier = Modifier.fillMaxWidth(),
-        text = stringResource(id = StringsR.string.sleep_timer_dialog_title),
-        style = MaterialTheme.typography.headlineSmallEmphasized,
-        textAlign = TextAlign.Center,
-      )
-      Spacer(modifier = Modifier.height(24.dp))
-      val presetShapes = listOf(
-        MaterialShapes.Cookie6Sided,
-        MaterialShapes.Sunny,
-        MaterialShapes.Cookie9Sided,
-        MaterialShapes.SoftBurst,
-      )
-      Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-      ) {
-        PRESETS.forEachIndexed { index, time ->
-          PresetButton(
-            minutes = time,
-            polygon = presetShapes[index],
-            containerColor = if (index % 2 == 0) {
-              MaterialTheme.colorScheme.primaryContainer
-            } else {
-              MaterialTheme.colorScheme.tertiaryContainer
-            },
-            contentColor = if (index % 2 == 0) {
-              MaterialTheme.colorScheme.onPrimaryContainer
-            } else {
-              MaterialTheme.colorScheme.onTertiaryContainer
-            },
-            onClick = { onAcceptSleepTime(time) },
-            // shrinks evenly when four don't fit, e.g. with a large display size
-            modifier = Modifier.weight(1F, fill = false),
-          )
-        }
+    Text(
+      modifier = Modifier.fillMaxWidth(),
+      text = stringResource(id = StringsR.string.sleep_timer_dialog_title),
+      style = MaterialTheme.typography.headlineSmallEmphasized,
+      textAlign = TextAlign.Center,
+    )
+    Spacer(modifier = Modifier.height(24.dp))
+    val presetShapes = listOf(
+      MaterialShapes.Cookie6Sided,
+      MaterialShapes.Sunny,
+      MaterialShapes.Cookie9Sided,
+      MaterialShapes.SoftBurst,
+    )
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      horizontalArrangement = Arrangement.SpaceEvenly,
+    ) {
+      PRESETS.forEachIndexed { index, time ->
+        PresetButton(
+          minutes = time,
+          polygon = presetShapes[index],
+          containerColor = if (index % 2 == 0) {
+            MaterialTheme.colorScheme.primaryContainer
+          } else {
+            MaterialTheme.colorScheme.tertiaryContainer
+          },
+          contentColor = if (index % 2 == 0) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+          } else {
+            MaterialTheme.colorScheme.onTertiaryContainer
+          },
+          onClick = { onAcceptSleepTime(time) },
+          // shrinks evenly when four don't fit, e.g. with a large display size
+          modifier = Modifier.weight(1F, fill = false),
+        )
       }
-      Spacer(modifier = Modifier.height(24.dp))
-      Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-      ) {
-        Row(
-          modifier = Modifier.padding(8.dp),
-          verticalAlignment = Alignment.CenterVertically,
-        ) {
-          ContinuousPressIcon(
-            onEmit = onDecrementSleepTime,
-            icon = VoiceIcons.Remove,
-            contentDescription = stringResource(id = StringsR.string.sleep_timer_dialog_action_decrement),
-          )
-          AnimatedContent(
-            modifier = Modifier.weight(1F),
-            targetState = viewState.customSleepTime,
-            transitionSpec = {
-              val up = targetState > initialState
-              val enter = slideInVertically { height -> if (up) height else -height } + fadeIn()
-              val exit = slideOutVertically { height -> if (up) -height else height } + fadeOut()
-              (enter togetherWith exit).using(SizeTransform(clip = false))
-            },
-            contentAlignment = Alignment.Center,
-            label = "customSleepTime",
-          ) { time ->
-            Text(
-              modifier = Modifier.fillMaxWidth(),
-              text = minutes(minutes = time),
-              style = MaterialTheme.typography.titleLargeEmphasized,
-              textAlign = TextAlign.Center,
-            )
-          }
-          ContinuousPressIcon(
-            onEmit = onIncrementSleepTime,
-            icon = VoiceIcons.Add,
-            contentDescription = stringResource(id = StringsR.string.sleep_timer_dialog_action_increment),
-          )
-          FilledIconButton(
-            onClick = { onAcceptSleepTime(viewState.customSleepTime) },
-            shapes = IconButtonDefaults.shapes(),
-            modifier = Modifier.size(IconButtonDefaults.mediumContainerSize()),
-          ) {
-            Icon(
-              imageVector = VoiceIcons.Check,
-              contentDescription = minutes(minutes = viewState.customSleepTime),
-            )
-          }
-        }
-      }
-      Spacer(modifier = Modifier.height(12.dp))
-      FilledTonalButton(
-        modifier = Modifier
-          .fillMaxWidth()
-          .height(56.dp),
-        onClick = onAcceptSleepAtEndOfChapter,
-        shapes = ButtonDefaults.shapes(),
-      ) {
-        Icon(imageVector = VoiceIcons.Bedtime, contentDescription = null)
-        Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
-        Text(text = stringResource(id = StringsR.string.sleep_timer_end_of_chapter))
-      }
-      if (viewState.chapters.isNotEmpty()) {
-        ListItem(
-          modifier = Modifier.clickable(onClick = onShowChapters),
-          colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        ) {
-          Text(text = stringResource(id = StringsR.string.sleep_timer_after_chapter_select))
-        }
-      }
-      Spacer(modifier = Modifier.height(16.dp))
-      Text(
-        modifier = Modifier.fillMaxWidth(),
-        text = stringResource(id = StringsR.string.sleep_timer_dialog_shake_hint),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center,
-      )
     }
+    Spacer(modifier = Modifier.height(24.dp))
+    Surface(
+      modifier = Modifier.fillMaxWidth(),
+      shape = RoundedCornerShape(28.dp),
+      color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    ) {
+      Row(
+        modifier = Modifier.padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        ContinuousPressIcon(
+          onEmit = onDecrementSleepTime,
+          icon = VoiceIcons.Remove,
+          contentDescription = stringResource(id = StringsR.string.sleep_timer_dialog_action_decrement),
+        )
+        AnimatedContent(
+          modifier = Modifier.weight(1F),
+          targetState = viewState.customSleepTime,
+          transitionSpec = {
+            val up = targetState > initialState
+            val enter = slideInVertically { height -> if (up) height else -height } + fadeIn()
+            val exit = slideOutVertically { height -> if (up) -height else height } + fadeOut()
+            (enter togetherWith exit).using(SizeTransform(clip = false))
+          },
+          contentAlignment = Alignment.Center,
+          label = "customSleepTime",
+        ) { time ->
+          Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = minutes(minutes = time),
+            style = MaterialTheme.typography.titleLargeEmphasized,
+            textAlign = TextAlign.Center,
+          )
+        }
+        ContinuousPressIcon(
+          onEmit = onIncrementSleepTime,
+          icon = VoiceIcons.Add,
+          contentDescription = stringResource(id = StringsR.string.sleep_timer_dialog_action_increment),
+        )
+        FilledIconButton(
+          onClick = { onAcceptSleepTime(viewState.customSleepTime) },
+          shapes = IconButtonDefaults.shapes(),
+          modifier = Modifier.size(IconButtonDefaults.mediumContainerSize()),
+        ) {
+          Icon(
+            imageVector = VoiceIcons.Check,
+            contentDescription = minutes(minutes = viewState.customSleepTime),
+          )
+        }
+      }
+    }
+    Spacer(modifier = Modifier.height(12.dp))
+    FilledTonalButton(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height(56.dp),
+      onClick = onAcceptSleepAtEndOfChapter,
+      shapes = ButtonDefaults.shapes(),
+    ) {
+      Icon(imageVector = VoiceIcons.Bedtime, contentDescription = null)
+      Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
+      Text(text = stringResource(id = StringsR.string.sleep_timer_end_of_chapter))
+    }
+    if (viewState.chapters.isNotEmpty()) {
+      ListItem(
+        modifier = Modifier.clickable(onClick = onShowChapters),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+      ) {
+        Text(text = stringResource(id = StringsR.string.sleep_timer_after_chapter_select))
+      }
+    }
+    Spacer(modifier = Modifier.height(16.dp))
+    Text(
+      modifier = Modifier.fillMaxWidth(),
+      text = stringResource(id = StringsR.string.sleep_timer_dialog_shake_hint),
+      style = MaterialTheme.typography.bodyMedium,
+      color = MaterialTheme.colorScheme.onSurfaceVariant,
+      textAlign = TextAlign.Center,
+    )
+  }
 }
 
 @Composable

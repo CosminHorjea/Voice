@@ -507,6 +507,49 @@ class VoicePlayerTest {
   }
 
   @Test
+  fun `after chapter sleep timer pauses once the selected chapter finished`() = scope.runTest {
+    setMediaItems(
+      listOf(
+        chapter(
+          ChapterMark(startMs = 0, endMs = 1_000, name = null),
+          ChapterMark(startMs = 1_000, endMs = 2_000, name = null),
+        ),
+        chapter(ChapterMark(startMs = 0, endMs = 1_000, name = null)),
+      ),
+    )
+
+    player.prepare()
+    awaitReady()
+    sleepTimer.enable(SleepTimerMode.AfterChapter(chapterIndex = 1))
+
+    TestPlayerRunHelper.play(internalPlayer).untilPlayWhenReadyIs(false)
+
+    player.shouldHavePosition(2, 0)
+    assertFalse(player.playWhenReady)
+    assertEquals(expected = SleepTimerState.Disabled, actual = sleepTimer.state.value)
+  }
+
+  @Test
+  fun `after chapter sleep timer pauses when the last chapter ends`() = scope.runTest {
+    setMediaItems(
+      listOf(
+        chapter(ChapterMark(startMs = 0, endMs = 1_000, name = null)),
+        chapter(ChapterMark(startMs = 0, endMs = 1_000, name = null)),
+      ),
+    )
+
+    player.prepare()
+    awaitReady()
+    sleepTimer.enable(SleepTimerMode.AfterChapter(chapterIndex = 1))
+
+    TestPlayerRunHelper.play(internalPlayer).untilPlayWhenReadyIs(false)
+
+    assertEquals(expected = Player.STATE_ENDED, actual = internalPlayer.playbackState)
+    assertFalse(player.playWhenReady)
+    assertEquals(expected = SleepTimerState.Disabled, actual = sleepTimer.state.value)
+  }
+
+  @Test
   fun `auto rewind clamps to current chapter start`() = scope.runTest {
     setMediaItems(
       listOf(
