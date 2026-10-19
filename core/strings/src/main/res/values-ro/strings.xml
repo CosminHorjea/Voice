@@ -66,7 +66,7 @@
     <string name="book.category.action.mark_not_started">Marchează ca neîncepută încă</string>
     <string name="book.delete.bottom_sheet.title">Șterge cartea</string>
     <string name="book.delete.dialog.confirm_files">Șterge fișierele mele</string>
-    <string name="book.delete.dialog.message">Astfel vei șterge de pe dispozitiv și fișierele corespunzătoare cărții.</string>
+    <string name="book.delete.dialog.message">Fișierele vor fi șterse definitiv de pe dispozitivul tău. Nu le vei mai putea recupera.</string>
     <string name="book.delete.dialog.title">Șterge cartea</string>
     <string name="book.download.action">Descarcă</string>
     <string name="book.download.failed">Descărcarea nu s-a finalizat</string>
@@ -198,19 +198,29 @@
         <item quantity="few">%d fișiere audio</item>
         <item quantity="other">%d fișiere audio</item>
     </plurals>
-    <string name="history.action.continue_from">Continuă de la %1$s</string>
-    <string name="history.action.continue_from.chapter">Continuă de la cap. %1$d · %2$s</string>
     <string name="history.empty.message">Redările, pauzele și salturile apar aici, ca să găsești mereu drumul înapoi.</string>
     <string name="history.empty.title">Încă nimic aici</string>
     <string name="history.event.bookmark_jump">Salt la un semn de carte</string>
     <string name="history.event.chapter_change">Capitol schimbat</string>
-    <string name="history.event.dozed_off">Ai ațipit · timpul a expirat</string>
+    <string name="history.event.interrupted">Întrerupere de %s</string>
     <string name="history.event.jump_back">Revenire la poziția anterioară</string>
     <string name="history.event.moved">Poziție mutată</string>
+    <string name="history.event.paused">Pauză</string>
     <string name="history.event.played">Redare</string>
-    <string name="history.event.sleep_timer_set">Oprire temporizată</string>
+    <plurals name="history.event.rewound">
+        <item quantity="one">%d salt înapoi</item>
+        <item quantity="few">%d salturi înapoi</item>
+        <item quantity="other">%d de salturi înapoi</item>
+    </plurals>
+    <string name="history.event.shook">Ai scuturat telefonul ca să mai asculți</string>
+    <plurals name="history.event.skipped_ahead">
+        <item quantity="one">%d salt înainte</item>
+        <item quantity="few">%d salturi înainte</item>
+        <item quantity="other">%d de salturi înainte</item>
+    </plurals>
+    <string name="history.event.sleep_timer_ended">Temporizator expirat</string>
+    <string name="history.event.sleep_timer_on">Oprire temporizată activată</string>
     <string name="history.location.chapter">Cap. %1$d · %2$s</string>
-    <string name="history.source.app">În aplicație</string>
     <string name="history.source.audio_focus">Întrerupt</string>
     <string name="history.source.bluetooth">Dispozitiv Bluetooth</string>
     <string name="history.source.car">Mașină</string>
@@ -218,8 +228,6 @@
     <string name="history.source.notification">Notificare</string>
     <string name="history.source.other_app">Altă aplicație</string>
     <string name="history.source.other_device">Alt dispozitiv</string>
-    <string name="history.source.sleep_timer">Oprire temporizată</string>
-    <string name="history.source.unknown">Necunoscut</string>
     <string name="history.source.unplugged">Audio deconectat</string>
     <string name="history.source.watch">Ceas</string>
     <string name="history.source.widget">Widget</string>
@@ -230,9 +238,15 @@
     <string name="library.category.not_started.title">Cărți neascultate încă</string>
     <string name="library.continue_listening">Continuă ascultarea</string>
     <string name="library.empty.add_first_book">Adaugă directorul cu cărțile tale și poți să începi!</string>
+    <string name="library.empty.title">Nu s-au găsit cărți audio</string>
+    <string name="library.empty.message">Voice nu găsește nicio carte audio în directoarele tale. Verifică dacă fișierele mai sunt acolo sau adaugă un director.</string>
+    <string name="library.empty.action">Afișează directoarele</string>
     <string name="library.folders.title">Directoare cărți</string>
     <string name="library.folders.moved.dialog.title">Directoarele cu cărți audio s-au mutat</string>
     <string name="library.folders.moved.dialog.message">Acum poți gestiona directoarele cu cărți audio din Setări.</string>
+    <string name="library.folders.no_access">Fără acces</string>
+    <string name="library.folders.no_access.action">Permite accesul</string>
+    <string name="library.folders.no_access.badge">Permite din nou accesul la directoarele tale</string>
     <string name="library.greeting.afternoon">Bună ziua</string>
     <string name="library.greeting.evening">Bună seara</string>
     <string name="library.greeting.morning">Bună dimineața</string>
@@ -351,6 +365,8 @@
     <string name="settings.appearance.color_scheme.forest">Pădure</string>
     <string name="settings.appearance.color_scheme.lagoon">Lagună</string>
     <string name="settings.appearance.color_scheme.lavender">Lavandă</string>
+    <string name="settings.appearance.pure_black.summary">Economisește bateria pe ecranele OLED în tema întunecată.</string>
+    <string name="settings.appearance.pure_black.title">Negru pur</string>
     <string name="settings.appearance.theme.dark">Întunecată</string>
     <string name="settings.appearance.theme.follow_system">Conform sistemului</string>
     <string name="settings.appearance.theme.light">Luminoasă</string>
@@ -396,8 +412,7 @@
     <string name="support.badges.title">Insigna ta crește cu fiecare lună de susținere</string>
     <string name="support.action.donate_kofi">Donează pe Ko-fi</string>
     <string name="support.description.maintenance">Voice este gratuit, open source și întreținut de un singur dezvoltator.</string>
-    <string name="support.description.maintenance_subtitle">Donațiile finanțează întreținerea și dezvoltarea continuă.</string>
-    <string name="support.description.play">Susținerea lunară îmi permite să planific următoarea versiune, nu doar următoarea remediere.</string>
+    <string name="support.description.monthly">Susținerea lunară îmi permite să planific următoarea versiune, nu doar următoarea remediere.</string>
     <string name="support.fine_print">E un mulțumesc: nu deblochează nimic. Anulezi oricând din Google Play.</string>
     <string name="support.fine_print.tip">E un mulțumesc: nu deblochează nimic. Fără abonament.</string>
     <string name="support.helps.title">Sprijinul tău ajută la</string>
@@ -405,7 +420,7 @@
     <string name="support.helps.features">Funcții noi</string>
     <string name="support.helps.open_source">Păstrarea Voice fără reclame</string>
     <string name="support.hero.title">Dă-i glas lui Voice</string>
-    <string name="support.kofi.hint">Ko-fi se deschide în browser. Orice sumă ajută.</string>
+    <string name="support.kofi.hint">Ko-fi se deschide în browser. Lunar sau o singură dată, fără cont.</string>
     <string name="support.message.failed">Nu a mers. Încearcă din nou peste puțin timp.</string>
     <string name="support.message.pending">Ceaiul tău se infuzează. Insigna apare după ce Google confirmă plata.</string>
     <string name="support.period.monthly">Lunar</string>

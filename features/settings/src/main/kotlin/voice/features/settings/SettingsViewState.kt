@@ -9,6 +9,7 @@ import java.time.YearMonth
 data class SettingsViewState(
   val themeMode: ThemeMode,
   val themeColorScheme: ThemeColorScheme,
+  val pureBlack: Boolean,
   val dynamicColorAvailable: Boolean,
   val seekTimeInSeconds: Int,
   val autoRewindInSeconds: Int,
@@ -23,6 +24,7 @@ data class SettingsViewState(
   val supporterBadge: SupporterBadge?,
   val supporterSince: YearMonth?,
   val folderNames: List<String>,
+  val foldersWithoutAccess: Boolean,
   /** The connected Audiobookshelf server, or null without one. */
   val audiobookshelfServer: String?,
   val showAudiobookshelf: Boolean,
@@ -33,6 +35,7 @@ data class SettingsViewState(
       return SettingsViewState(
         themeMode = ThemeMode.FollowSystem,
         themeColorScheme = ThemeColorScheme.VoiceBlue,
+        pureBlack = false,
         dynamicColorAvailable = true,
         seekTimeInSeconds = 20,
         autoRewindInSeconds = 2,
@@ -47,6 +50,7 @@ data class SettingsViewState(
         supporterBadge = null,
         supporterSince = null,
         folderNames = listOf("Audiobooks", "Sci-Fi", "Non-Fiction"),
+        foldersWithoutAccess = false,
         audiobookshelfServer = "audiobooks.example.com",
         showAudiobookshelf = true,
       )

@@ -53,12 +53,13 @@ class DeleteBookViewModel(
       id = bookId,
       name = book?.content?.name,
       cover = book?.content?.coverUrl,
+      fileCount = book?.chapters?.size,
       deleteCheckBoxChecked = false,
       fileToDelete = bookId.toUri().pathSegments
         .let { segments ->
           val result = segments.lastOrNull()?.removePrefix("primary:")
           if (result.isNullOrEmpty()) {
-            Logger.w("Could not determine path for $segments")
+            Logger.w("Could not determine the file name to show (${segments.size} segments)")
             segments.joinToString(separator = "\"")
           } else {
             result
@@ -98,6 +99,7 @@ data class DeleteBookViewState(
   val id: BookId,
   val name: String?,
   val cover: String?,
+  val fileCount: Int?,
   val deleteCheckBoxChecked: Boolean,
   val fileToDelete: String,
 ) {

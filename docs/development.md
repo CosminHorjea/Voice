@@ -113,7 +113,29 @@ The `release` environment requires these secrets:
 | `GH_SIGNING_KEY_PASSWORD`                   | GitHub/free release key password.                               |
 | `FIREBASE_APP_DISTRIBUTION_SERVICE_ACCOUNT` | Firebase App Distribution service account JSON, base64 encoded. |
 
-F-Droid builds are handled by their team and usually appear a few days after a stable (non-RC) release.
+### Releasing to F-Droid, IzzyDroid and GitHub
+
+The draft gets its git tag only when it's published. F-Droid builds every tag that matches `^[\d.]+-\d+$`, usually a few
+days later, and IzzyDroid picks up the APK from the published release. Neither has a staged rollout, so publish the
+draft only once the Play rollout has reached 100%.
+
+A version that turns out broken on Play is never published. Keep its draft until the next release is published: the
+next version is counted from the tags and the drafts, so deleting it earlier hands its version code out again, which
+Play rejects.
+
+#### Checking on F-Droid
+
+F-Droid takes a release in three steps:
+
+1. **Picked up:** the checkupdates bot adds the new tag to
+   [Voice's build recipe](https://gitlab.com/fdroid/fdroiddata/-/commits/master/metadata/de.ph1b.audiobook.yml) with
+   the commit `bot: Update Voice to <versionCode>`. It only takes the newest tag, so a release that already has a
+   successor when the bot runs is never built.
+2. **Built:** the [last build cycle](https://monitor.f-droid.org/builds/build) shows when it ran and lists the
+   successful and failed builds. The build log of a version, failed or not, is at
+   `https://monitor.f-droid.org/builds/log/de.ph1b.audiobook/<versionCode>`.
+3. **Published:** [Voice on F-Droid](https://f-droid.org/packages/de.ph1b.audiobook/) lists each version with the
+   day it was added.
 
 ### Tester Builds
 
@@ -153,6 +175,10 @@ The generator uses:
 
 Only locales with `marketing.yml` get localized generated images. The script removes old generated screenshot folders before writing the current output, so deleted tablet screenshots do not remain in the repository.
 
+To take the raw screenshots again, run `./scripts/take_store_screenshots.py`. It needs `ffmpeg` and starts an agent
+emulator of its own (see the emulator skill), so your devices and library stay untouched. It adds a generated library
+with the books of the kiosk mode, and uses kiosk mode for the library, bookmarks, history, and feature graphic.
+
 The `artwork/package-lock.json` file is intentionally not checked in. CI and local generation use `npm install` from `artwork/package.json` to keep this small tool out of regular lockfile update churn.
 
 ## Versioning
@@ -179,7 +205,7 @@ The Android `versionCode` is calculated from the version name with:
 
 Example: `25.9.1` → `(25+28)=53`, `MM=09`, `RELEASE=001` → `5309001`.
 
-This code is embedded in the git tag by `release.main.kts` and used by CI and Fastlane.
+This code is embedded in the git tag by `determine_release_tag.main.kts` and used by CI and Fastlane.
 
 ## Pages Deployment
 

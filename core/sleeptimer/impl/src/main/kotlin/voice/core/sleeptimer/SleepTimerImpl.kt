@@ -50,6 +50,10 @@ class SleepTimerImpl internal constructor(
   override fun enable(mode: SleepTimerMode) {
     tracker.enabled(mode)
     disable() // cancel any active job first
+    playerController.record(
+      ListeningEvent.Type.SleepTimerStarted,
+      if (mode == SleepTimerMode.TimedWithDefault) ListeningEvent.Source.SleepTimer else ListeningEvent.Source.App,
+    )
 
     job = scope.launch {
       when (mode) {
@@ -108,7 +112,6 @@ class SleepTimerImpl internal constructor(
   }
 
   private suspend fun detectShakeWithTimeout(): Boolean {
-    Logger.d("Waiting $SHAKE_TO_RESET_TIME for shake...")
     return withTimeoutOrNull(SHAKE_TO_RESET_TIME) {
       shakeDetector.detect()
       true
@@ -126,9 +129,7 @@ class SleepTimerImpl internal constructor(
 
   private suspend fun suspendUntilPlaying() {
     if (playStateManager.playState != Playing) {
-      Logger.i("Not playing. Waiting for playback to continue.")
       playStateManager.playStateFlow.first { it == Playing }
-      Logger.i("Playback resumed.")
     }
   }
 

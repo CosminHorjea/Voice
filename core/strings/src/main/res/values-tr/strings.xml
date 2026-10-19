@@ -63,7 +63,7 @@
     <string name="book.category.action.mark_not_started">Henüz başlamadı olarak işaretle</string>
     <string name="book.delete.bottom_sheet.title">Kitabı Sil</string>
     <string name="book.delete.dialog.confirm_files">Dosyalarımı sil</string>
-    <string name="book.delete.dialog.message">Bu, aygıtınızdaki dosyaları silecektir.</string>
+    <string name="book.delete.dialog.message">Dosyalar cihazınızdan kalıcı olarak silinir. Geri getiremezsiniz.</string>
     <string name="book.delete.dialog.title">Kitabı Sil</string>
     <string name="book.download.action">İndir</string>
     <string name="book.download.failed">İndirme tamamlanamadı</string>
@@ -187,19 +187,27 @@
         <item quantity="one">%d ses dosyası</item>
         <item quantity="other">%d ses dosyası</item>
     </plurals>
-    <string name="history.action.continue_from">%1$s konumundan devam et</string>
-    <string name="history.action.continue_from.chapter">Böl. %1$d · %2$s konumundan devam et</string>
     <string name="history.empty.message">Oynatma, duraklatma ve atlamalar burada görünür, böylece kaldığınız yeri her zaman bulabilirsiniz.</string>
     <string name="history.empty.title">Henüz burada bir şey yok</string>
     <string name="history.event.bookmark_jump">Yer imine gidildi</string>
     <string name="history.event.chapter_change">Bölüm değiştirildi</string>
-    <string name="history.event.dozed_off">Uyuyakaldınız · zamanlayıcı bitti</string>
+    <string name="history.event.interrupted">%s boyunca kesintiye uğradı</string>
     <string name="history.event.jump_back">Önceki yere dönüldü</string>
     <string name="history.event.moved">Konum değiştirildi</string>
+    <string name="history.event.paused">Duraklatıldı</string>
     <string name="history.event.played">Oynatıldı</string>
-    <string name="history.event.sleep_timer_set">Uyku zamanlayıcısı</string>
+    <plurals name="history.event.rewound">
+        <item quantity="one">%d kez geri sarıldı</item>
+        <item quantity="other">%d kez geri sarıldı</item>
+    </plurals>
+    <string name="history.event.shook">Sallayarak dinlemeye devam edildi</string>
+    <plurals name="history.event.skipped_ahead">
+        <item quantity="one">%d kez ileri sarıldı</item>
+        <item quantity="other">%d kez ileri sarıldı</item>
+    </plurals>
+    <string name="history.event.sleep_timer_ended">Uyku zamanlayıcısı sona erdi</string>
+    <string name="history.event.sleep_timer_on">Uyku zamanlayıcısı açıldı</string>
     <string name="history.location.chapter">Böl. %1$d · %2$s</string>
-    <string name="history.source.app">Uygulamada</string>
     <string name="history.source.audio_focus">Kesintiye uğradı</string>
     <string name="history.source.bluetooth">Bluetooth aygıtı</string>
     <string name="history.source.car">Araç</string>
@@ -207,8 +215,6 @@
     <string name="history.source.notification">Bildirim</string>
     <string name="history.source.other_app">Başka bir uygulama</string>
     <string name="history.source.other_device">Başka bir cihaz</string>
-    <string name="history.source.sleep_timer">Uyku zamanlayıcısı</string>
-    <string name="history.source.unknown">Bilinmiyor</string>
     <string name="history.source.unplugged">Ses bağlantısı kesildi</string>
     <string name="history.source.watch">Akıllı saat</string>
     <string name="history.source.widget">Widget</string>
@@ -219,9 +225,15 @@
     <string name="library.category.not_started.title">Henüz başlamadı</string>
     <string name="library.continue_listening">Dinlemeye devam et</string>
     <string name="library.empty.add_first_book">Dinlemeye başlayabilmeniz için sesli kitap dizininizi ekleyelim!</string>
+    <string name="library.empty.title">Sesli kitap bulunamadı</string>
+    <string name="library.empty.message">Voice, klasörlerinizde hiç sesli kitap bulamıyor. Dosyaların hâlâ yerinde olup olmadığını kontrol edin veya bir klasör ekleyin.</string>
+    <string name="library.empty.action">Klasörleri göster</string>
     <string name="library.folders.title">Sesli kitap dizinleri</string>
     <string name="library.folders.moved.dialog.title">Sesli kitap klasörleri taşındı</string>
     <string name="library.folders.moved.dialog.message">Sesli kitap klasörlerini artık Ayarlar\'da yönetebilirsiniz.</string>
+    <string name="library.folders.no_access">Erişim yok</string>
+    <string name="library.folders.no_access.action">Erişime izin ver</string>
+    <string name="library.folders.no_access.badge">Klasörlerinize yeniden erişim izni verin</string>
     <string name="library.greeting.afternoon">Tünaydın</string>
     <string name="library.greeting.evening">İyi akşamlar</string>
     <string name="library.greeting.morning">Günaydın</string>
@@ -336,6 +348,8 @@
     <string name="settings.appearance.color_scheme.dynamic">Dinamik renk</string>
     <string name="settings.appearance.color_scheme.dynamic.summary">Duvar kağıdınızdan ve sistem temasından renkleri kullanır.</string>
     <string name="settings.appearance.color_scheme.voice_blue">Voice mavisi</string>
+    <string name="settings.appearance.pure_black.summary">Koyu temada OLED ekranlarda pil tasarrufu sağlar.</string>
+    <string name="settings.appearance.pure_black.title">Saf siyah</string>
     <string name="settings.appearance.theme.dark">Koyu</string>
     <string name="settings.appearance.theme.follow_system">Sistemi takip et</string>
     <string name="settings.appearance.theme.light">Açık</string>
@@ -380,8 +394,7 @@
     <string name="support.badges.title">Rozetin, destek olduğun her ay büyür</string>
     <string name="support.action.donate_kofi">Ko-fi üzerinden bağış yap</string>
     <string name="support.description.maintenance">Voice ücretsiz, açık kaynaklıdır ve tek bir geliştirici tarafından sürdürülür.</string>
-    <string name="support.description.maintenance_subtitle">Bağışlar sürekli bakım ve geliştirmeyi finanse etmeye yardımcı olur.</string>
-    <string name="support.description.play">Aylık destek, sadece bir sonraki düzeltmeyi değil, bir sonraki sürümü planlamamı sağlıyor.</string>
+    <string name="support.description.monthly">Aylık destek, sadece bir sonraki düzeltmeyi değil, bir sonraki sürümü planlamamı sağlıyor.</string>
     <string name="support.fine_print">Bu bir teşekkür: hiçbir şeyin kilidini açmaz. Google Play\'den istediğin zaman iptal et.</string>
     <string name="support.fine_print.tip">Bu bir teşekkür: hiçbir şeyin kilidini açmaz. Abonelik yok.</string>
     <string name="support.helps.title">Destek şunlara yardımcı olur</string>
@@ -389,7 +402,7 @@
     <string name="support.helps.features">Yeni özellikler</string>
     <string name="support.helps.open_source">Voice\'u reklamsız tutmak</string>
     <string name="support.hero.title">Voice konuşmaya devam etsin</string>
-    <string name="support.kofi.hint">Ko-fi tarayıcında açılır. Her miktar yardımcı olur.</string>
+    <string name="support.kofi.hint">Ko-fi tarayıcınızda açılır. Aylık ya da tek seferlik, hesap gerekmez.</string>
     <string name="support.message.failed">Bu sefer olmadı. Birazdan tekrar dene.</string>
     <string name="support.message.pending">Çayın demleniyor. Google ödemeyi onayladığında rozetin görünecek.</string>
     <string name="support.period.monthly">Aylık</string>

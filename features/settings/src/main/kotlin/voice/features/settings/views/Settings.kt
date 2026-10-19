@@ -150,6 +150,7 @@ private fun LazyListScope.sections(
     LibrarySection(
       modifier = modifier,
       folderNames = viewState.folderNames,
+      foldersWithoutAccess = viewState.foldersWithoutAccess,
       audiobookshelfServer = viewState.audiobookshelfServer,
       showAudiobookshelf = viewState.showAudiobookshelf,
       useGrid = viewState.useGrid,
@@ -173,9 +174,11 @@ private fun LazyListScope.sections(
       modifier = modifier,
       themeMode = viewState.themeMode,
       themeColorScheme = viewState.themeColorScheme,
+      pureBlack = viewState.pureBlack,
       dynamicColorAvailable = viewState.dynamicColorAvailable,
       onThemeModeSelect = listener::setThemeMode,
       onThemeColorSchemeSelect = listener::setThemeColorScheme,
+      onPureBlackToggle = listener::togglePureBlack,
     )
   }
   section("listening") { modifier ->

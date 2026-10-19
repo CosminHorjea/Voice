@@ -63,7 +63,7 @@
     <string name="book.category.action.mark_not_started">علامت زدن به عنوان شروع نشده</string>
     <string name="book.delete.bottom_sheet.title">پاک کردن کتاب</string>
     <string name="book.delete.dialog.confirm_files">فایلهای من را پاک کن</string>
-    <string name="book.delete.dialog.message">با این کار فایل های موجود در دستگاه شما حذف می شود.</string>
+    <string name="book.delete.dialog.message">فایل‌ها برای همیشه از دستگاه شما حذف می‌شوند. دیگر نمی‌توانید آن‌ها را برگردانید.</string>
     <string name="book.delete.dialog.title">پاک کردن کتاب</string>
     <string name="book.download.action">دانلود</string>
     <string name="book.download.failed">دانلود کامل نشد</string>
@@ -187,19 +187,27 @@
         <item quantity="one">%d فایل صوتی</item>
         <item quantity="other">%d فایل های صوتی</item>
     </plurals>
-    <string name="history.action.continue_from">ادامه از %1$s</string>
-    <string name="history.action.continue_from.chapter">ادامه از فصل %1$d · %2$s</string>
     <string name="history.empty.message">پخش‌ها، توقف‌ها و پرش‌ها اینجا نمایش داده می‌شوند تا همیشه بتوانید راه برگشت را پیدا کنید.</string>
     <string name="history.empty.title">هنوز چیزی اینجا نیست</string>
     <string name="history.event.bookmark_jump">رفتن به نشانه</string>
     <string name="history.event.chapter_change">تغییر فصل</string>
-    <string name="history.event.dozed_off">خوابم برد · تایمر تمام شد</string>
+    <string name="history.event.interrupted">وقفه به مدت %s</string>
     <string name="history.event.jump_back">بازگشت به جای قبلی</string>
     <string name="history.event.moved">جابه‌جایی</string>
+    <string name="history.event.paused">توقف</string>
     <string name="history.event.played">پخش</string>
-    <string name="history.event.sleep_timer_set">تایمر خواب</string>
+    <plurals name="history.event.rewound">
+        <item quantity="one">%d بار عقب بردن</item>
+        <item quantity="other">%d بار عقب بردن</item>
+    </plurals>
+    <string name="history.event.shook">تکان دادن گوشی برای ادامهٔ گوش دادن</string>
+    <plurals name="history.event.skipped_ahead">
+        <item quantity="one">%d بار جلو بردن</item>
+        <item quantity="other">%d بار جلو بردن</item>
+    </plurals>
+    <string name="history.event.sleep_timer_ended">پایان تایمر خواب</string>
+    <string name="history.event.sleep_timer_on">شروع تایمر خواب</string>
     <string name="history.location.chapter">فصل %1$d · %2$s</string>
-    <string name="history.source.app">درون برنامه</string>
     <string name="history.source.audio_focus">وقفه</string>
     <string name="history.source.bluetooth">دستگاه بلوتوث</string>
     <string name="history.source.car">خودرو</string>
@@ -207,8 +215,6 @@
     <string name="history.source.notification">اعلان</string>
     <string name="history.source.other_app">برنامهٔ دیگر</string>
     <string name="history.source.other_device">دستگاه دیگر</string>
-    <string name="history.source.sleep_timer">تایمر خواب</string>
-    <string name="history.source.unknown">نامشخص</string>
     <string name="history.source.unplugged">اتصال صدا قطع شد</string>
     <string name="history.source.watch">ساعت هوشمند</string>
     <string name="history.source.widget">ویجت</string>
@@ -219,9 +225,15 @@
     <string name="library.category.not_started.title">هنوز شروع نشده</string>
     <string name="library.continue_listening">ادامهٔ گوش دادن</string>
     <string name="library.empty.add_first_book">پوشه کتاب صوتی خود را اضافه کنید تا بتوانید شروع به گوش دادن کنید!</string>
+    <string name="library.empty.title">هیچ کتاب صوتی‌ای پیدا نشد</string>
+    <string name="library.empty.message">در پوشه‌های شما، Voice هیچ کتاب صوتی‌ای پیدا نمی‌کند. مطمئن شوید فایل‌ها هنوز سر جایشان هستند، یا یک پوشه اضافه کنید.</string>
+    <string name="library.empty.action">نمایش پوشه‌ها</string>
     <string name="library.folders.title">پوشه‌های کتاب صوتی</string>
     <string name="library.folders.moved.dialog.title">پوشه‌های کتاب صوتی منتقل شدند</string>
     <string name="library.folders.moved.dialog.message">اکنون می‌توانید پوشه‌های کتاب صوتی را در تنظیمات مدیریت کنید.</string>
+    <string name="library.folders.no_access">بدون دسترسی</string>
+    <string name="library.folders.no_access.action">اجازه دسترسی</string>
+    <string name="library.folders.no_access.badge">دوباره اجازه دسترسی به پوشه‌هایتان را بدهید</string>
     <string name="library.greeting.afternoon">عصر بخیر</string>
     <string name="library.greeting.evening">شب بخیر</string>
     <string name="library.greeting.morning">صبح بخیر</string>
@@ -336,6 +348,8 @@
     <string name="settings.appearance.color_scheme.dynamic">رنگ پویا</string>
     <string name="settings.appearance.color_scheme.dynamic.summary">از رنگ‌های تصویر زمینه و تم سیستم شما استفاده می‌کند.</string>
     <string name="settings.appearance.color_scheme.voice_blue">آبی Voice</string>
+    <string name="settings.appearance.pure_black.summary">در تم تیره، مصرف باتری را در صفحه‌نمایش‌های OLED کاهش می‌دهد.</string>
+    <string name="settings.appearance.pure_black.title">سیاه خالص</string>
     <string name="settings.appearance.theme.dark">تیره</string>
     <string name="settings.appearance.theme.follow_system">پیروی از سیستم</string>
     <string name="settings.appearance.theme.light">روشن</string>
@@ -380,8 +394,7 @@
     <string name="support.badges.title">نشان شما با هر ماه حمایت بزرگ‌تر می‌شود</string>
     <string name="support.action.donate_kofi">کمک مالی در Ko-fi</string>
     <string name="support.description.maintenance">Voice رایگان، متن‌باز، و توسط یک توسعه‌دهنده نگهداری می‌شود.</string>
-    <string name="support.description.maintenance_subtitle">کمک‌های مالی به تأمین هزینه نگهداری و توسعه مداوم کمک می‌کنند.</string>
-    <string name="support.description.play">حمایت ماهانه به من امکان می‌دهد نسخه‌ی بعدی را برنامه‌ریزی کنم، نه فقط رفع اشکال بعدی را.</string>
+    <string name="support.description.monthly">حمایت ماهانه به من امکان می‌دهد نسخه‌ی بعدی را برنامه‌ریزی کنم، نه فقط رفع اشکال بعدی را.</string>
     <string name="support.fine_print">این یک تشکر است: هیچ قابلیتی را باز نمی‌کند. هر زمان خواستید در Google Play لغو کنید.</string>
     <string name="support.fine_print.tip">این یک تشکر است: هیچ قابلیتی را باز نمی‌کند. بدون اشتراک.</string>
     <string name="support.helps.title">حمایت کمک می‌کند به</string>
@@ -389,7 +402,7 @@
     <string name="support.helps.features">ویژگی‌های جدید</string>
     <string name="support.helps.open_source">بدون تبلیغ نگه داشتن Voice</string>
     <string name="support.hero.title">صدای Voice را زنده نگه دارید</string>
-    <string name="support.kofi.hint">Ko-fi در مرورگرتان باز می‌شود. هر مبلغی کمک می‌کند.</string>
+    <string name="support.kofi.hint">Ko-fi در مرورگرتان باز می‌شود. ماهانه یا یک‌باره، بدون نیاز به حساب کاربری.</string>
     <string name="support.message.failed">انجام نشد. چند لحظه‌ی دیگر دوباره امتحان کنید.</string>
     <string name="support.message.pending">چای‌تان در حال دم کشیدن است. نشان شما پس از تأیید پرداخت توسط Google نمایش داده می‌شود.</string>
     <string name="support.period.monthly">ماهانه</string>

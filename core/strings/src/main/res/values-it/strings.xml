@@ -66,7 +66,7 @@
     <string name="book.category.action.mark_not_started">Contrassegna come non ancora iniziato</string>
     <string name="book.delete.bottom_sheet.title">Elimina libro</string>
     <string name="book.delete.dialog.confirm_files">Elimina i miei file</string>
-    <string name="book.delete.dialog.message">Questo eliminerà i file sul tuo dispositivo.</string>
+    <string name="book.delete.dialog.message">I file verranno eliminati definitivamente dal tuo dispositivo. Non potrai recuperarli.</string>
     <string name="book.delete.dialog.title">Elimina libro</string>
     <string name="book.download.action">Scarica</string>
     <string name="book.download.failed">Il download non è stato completato</string>
@@ -198,19 +198,29 @@
         <item quantity="many">%d file audio</item>
         <item quantity="other">%d file audio</item>
     </plurals>
-    <string name="history.action.continue_from">Riprendi da %1$s</string>
-    <string name="history.action.continue_from.chapter">Riprendi dal cap. %1$d · %2$s</string>
     <string name="history.empty.message">Riproduzioni, pause e salti compaiono qui, così puoi sempre ritrovare il punto in cui eri.</string>
     <string name="history.empty.title">Ancora niente qui</string>
     <string name="history.event.bookmark_jump">Salto a un segnalibro</string>
     <string name="history.event.chapter_change">Cambio capitolo</string>
-    <string name="history.event.dozed_off">Addormentato · timer scaduto</string>
+    <string name="history.event.interrupted">Interruzione di %s</string>
     <string name="history.event.jump_back">Ritorno alla posizione precedente</string>
     <string name="history.event.moved">Posizione spostata</string>
+    <string name="history.event.paused">Pausa</string>
     <string name="history.event.played">Riproduzione</string>
-    <string name="history.event.sleep_timer_set">Timer sospensione</string>
+    <plurals name="history.event.rewound">
+        <item quantity="one">%d salto indietro</item>
+        <item quantity="many">%d salti indietro</item>
+        <item quantity="other">%d salti indietro</item>
+    </plurals>
+    <string name="history.event.shook">Telefono scosso per ascoltare ancora</string>
+    <plurals name="history.event.skipped_ahead">
+        <item quantity="one">%d salto in avanti</item>
+        <item quantity="many">%d salti in avanti</item>
+        <item quantity="other">%d salti in avanti</item>
+    </plurals>
+    <string name="history.event.sleep_timer_ended">Timer sospensione scaduto</string>
+    <string name="history.event.sleep_timer_on">Timer sospensione attivato</string>
     <string name="history.location.chapter">Cap. %1$d · %2$s</string>
-    <string name="history.source.app">Nell\'app</string>
     <string name="history.source.audio_focus">Interruzione</string>
     <string name="history.source.bluetooth">Dispositivo Bluetooth</string>
     <string name="history.source.car">Auto</string>
@@ -218,8 +228,6 @@
     <string name="history.source.notification">Notifica</string>
     <string name="history.source.other_app">Un\'altra app</string>
     <string name="history.source.other_device">Un altro dispositivo</string>
-    <string name="history.source.sleep_timer">Timer sospensione</string>
-    <string name="history.source.unknown">Sconosciuto</string>
     <string name="history.source.unplugged">Audio scollegato</string>
     <string name="history.source.watch">Orologio</string>
     <string name="history.source.widget">Widget</string>
@@ -230,9 +238,15 @@
     <string name="library.category.not_started.title">Non ancora iniziato</string>
     <string name="library.continue_listening">Continua ad ascoltare</string>
     <string name="library.empty.add_first_book">Aggiungiamo la tua cartella degli audiolibri per iniziare ad ascoltare!</string>
+    <string name="library.empty.title">Nessun audiolibro trovato</string>
+    <string name="library.empty.message">Voice non trova nessun audiolibro nelle tue cartelle. Controlla che i file siano ancora lì o aggiungi una cartella.</string>
+    <string name="library.empty.action">Mostra cartelle</string>
     <string name="library.folders.title">Cartelle audiolibri</string>
     <string name="library.folders.moved.dialog.title">Cartelle degli audiolibri spostate</string>
     <string name="library.folders.moved.dialog.message">Ora puoi gestire le cartelle degli audiolibri nelle Impostazioni.</string>
+    <string name="library.folders.no_access">Nessun accesso</string>
+    <string name="library.folders.no_access.action">Consenti l\'accesso</string>
+    <string name="library.folders.no_access.badge">Consenti di nuovo l\'accesso alle tue cartelle</string>
     <string name="library.greeting.afternoon">Buon pomeriggio</string>
     <string name="library.greeting.evening">Buonasera</string>
     <string name="library.greeting.morning">Buongiorno</string>
@@ -352,6 +366,8 @@
     <string name="settings.appearance.color_scheme.dynamic">Colore dinamico</string>
     <string name="settings.appearance.color_scheme.dynamic.summary">Usa i colori dello sfondo e del tema di sistema.</string>
     <string name="settings.appearance.color_scheme.voice_blue">Blu Voice</string>
+    <string name="settings.appearance.pure_black.summary">Risparmia batteria sugli schermi OLED con il tema scuro.</string>
+    <string name="settings.appearance.pure_black.title">Nero puro</string>
     <string name="settings.appearance.theme.dark">Scuro</string>
     <string name="settings.appearance.theme.follow_system">Segui il sistema</string>
     <string name="settings.appearance.theme.light">Chiaro</string>
@@ -396,8 +412,7 @@
     <string name="support.badges.title">Il tuo badge cresce a ogni mese di sostegno</string>
     <string name="support.action.donate_kofi">Dona su Ko-fi</string>
     <string name="support.description.maintenance">Voice è gratuito, open source e mantenuto da un solo sviluppatore.</string>
-    <string name="support.description.maintenance_subtitle">Le donazioni aiutano a finanziare manutenzione e sviluppo continui.</string>
-    <string name="support.description.play">Il sostegno mensile è ciò che mi permette di pianificare la prossima versione, non solo la prossima correzione.</string>
+    <string name="support.description.monthly">Il sostegno mensile è ciò che mi permette di pianificare la prossima versione, non solo la prossima correzione.</string>
     <string name="support.fine_print">È un grazie: non sblocca nulla. Annulla quando vuoi su Google Play.</string>
     <string name="support.fine_print.tip">È un grazie: non sblocca nulla. Nessun abbonamento.</string>
     <string name="support.helps.title">Il supporto aiuta con</string>
@@ -405,7 +420,7 @@
     <string name="support.helps.features">Nuove funzionalità</string>
     <string name="support.helps.open_source">Mantenere Voice senza pubblicità</string>
     <string name="support.hero.title">Dai voce a Voice</string>
-    <string name="support.kofi.hint">Ko-fi si apre nel browser. Ogni importo aiuta.</string>
+    <string name="support.kofi.hint">Ko-fi si apre nel browser. Ogni mese o una tantum, senza account.</string>
     <string name="support.message.failed">Non ha funzionato. Riprova tra un attimo.</string>
     <string name="support.message.pending">Il tuo tè è in infusione. Il badge apparirà quando Google confermerà il pagamento.</string>
     <string name="support.period.monthly">Mensile</string>

@@ -1,14 +1,17 @@
 package voice.features.bookOverview.overview
 
+import android.net.Uri
 import androidx.datastore.core.DataStore
 import app.cash.molecule.RecompositionMode
 import app.cash.molecule.launchMolecule
 import app.cash.turbine.test
 import io.mockk.Runs
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -21,6 +24,8 @@ import voice.core.data.Book
 import voice.core.data.BookId
 import voice.core.data.GridMode
 import voice.core.data.KioskModeDemoData
+import voice.core.data.folders.AudiobookFolders
+import voice.core.data.folders.FolderType
 import voice.core.data.repo.BookRepository
 import voice.core.featureflag.MemoryFeatureFlag
 import voice.core.playback.LivePlaybackState
@@ -47,6 +52,10 @@ class BookOverviewViewModelTest {
     every { downloadStates } returns flowOf(emptyMap())
   }
   private val dispatcherProvider = DispatcherProvider(testDispatcher, testDispatcher, testDispatcher)
+  private val audiobookFolders = mockk<AudiobookFolders> {
+    every { withoutAccess() } returns flowOf(emptyMap())
+  }
+  private val emptyLibraryTracker = mockk<EmptyLibraryTracker>(relaxUnitFun = true)
 
   @Test
   fun `state updates the current book item from live playback`() = runTest {
@@ -81,6 +90,8 @@ class BookOverviewViewModelTest {
       kioskModeFeatureFlag = MemoryFeatureFlag(false),
       dispatcherProvider = dispatcherProvider,
       serverLibrary = serverLibrary,
+      audiobookFolders = audiobookFolders,
+      emptyLibraryTracker = emptyLibraryTracker,
     )
 
     backgroundScope.launchMolecule(RecompositionMode.Immediate) {
@@ -141,6 +152,8 @@ class BookOverviewViewModelTest {
       kioskModeFeatureFlag = MemoryFeatureFlag(true),
       dispatcherProvider = dispatcherProvider,
       serverLibrary = serverLibrary,
+      audiobookFolders = audiobookFolders,
+      emptyLibraryTracker = emptyLibraryTracker,
     )
 
     backgroundScope.launchMolecule(RecompositionMode.Immediate) {
@@ -155,6 +168,7 @@ class BookOverviewViewModelTest {
       )
       assertEquals(expected = "Echoes of Tomorrow", actual = state.currentBook(KioskModeDemoData.currentlyPlaying.id).name)
       assertEquals(expected = KioskModeDemoData.currentlyPlaying.id, actual = state.currentBookId)
+      assertEquals(expected = false, actual = state.showFolderAccessBadge)
     }
   }
 
@@ -286,6 +300,73 @@ class BookOverviewViewModelTest {
   }
 
   @Test
+  fun `a library without books shows that no books were found`() = runTest {
+    val viewModel = viewModel()
+
+    backgroundScope.launchMolecule(RecompositionMode.Immediate) {
+      viewModel.state()
+    }.test {
+      assertEquals(expected = BookOverviewViewState.Loading, actual = awaitItem())
+      assertEquals(expected = true, actual = awaitItem().showEmptyLibrary)
+    }
+  }
+
+  @Test
+  fun `an empty library shows that no books were found only once scanning is done`() = runTest {
+    val scanning = MutableStateFlow(true)
+    val viewModel = viewModel(scanning = scanning)
+
+    backgroundScope.launchMolecule(RecompositionMode.Immediate) {
+      viewModel.state()
+    }.test {
+      testScheduler.runCurrent()
+      assertEquals(expected = false, actual = expectMostRecentItem().showEmptyLibrary)
+      scanning.value = false
+      assertEquals(expected = true, actual = awaitItem().showEmptyLibrary)
+    }
+  }
+
+  @Test
+  fun `an empty library is tracked`() = runTest {
+    val viewModel = viewModel()
+
+    backgroundScope.launchMolecule(RecompositionMode.Immediate) {
+      viewModel.state()
+    }.test {
+      assertEquals(expected = BookOverviewViewState.Loading, actual = awaitItem())
+      assertEquals(expected = true, actual = awaitItem().showEmptyLibrary)
+      testScheduler.runCurrent()
+    }
+
+    coVerify { emptyLibraryTracker.track() }
+  }
+
+  @Test
+  fun `folders without access show the badge`() = runTest {
+    every { audiobookFolders.withoutAccess() } returns flowOf(mapOf(FolderType.Root to listOf(mockk<Uri>())))
+    val viewModel = viewModel()
+
+    backgroundScope.launchMolecule(RecompositionMode.Immediate) {
+      viewModel.state()
+    }.test {
+      assertEquals(expected = BookOverviewViewState.Loading, actual = awaitItem())
+      assertEquals(expected = true, actual = awaitItem().showFolderAccessBadge)
+    }
+  }
+
+  @Test
+  fun `show folders opens the folders`() = runTest {
+    val navigator = mockk<Navigator>(relaxed = true)
+    val viewModel = viewModel(navigator = navigator)
+
+    viewModel.onShowFoldersClick()
+
+    verify {
+      navigator.goTo(Destination.FolderPicker)
+    }
+  }
+
+  @Test
   fun `search click opens the search`() = runTest {
     val navigator = mockk<Navigator>(relaxed = true)
     val viewModel = viewModel(navigator = navigator)
@@ -308,13 +389,14 @@ class BookOverviewViewModelTest {
     appInfoProvider: AppInfoProvider = appInfoProvider(),
     books: List<Book> = emptyList(),
     currentBookId: BookId? = null,
+    scanning: Flow<Boolean> = MutableStateFlow(false),
   ): BookOverviewViewModel {
     return BookOverviewViewModel(
       repo = mockk<BookRepository> {
         every { flow() } returns MutableStateFlow(books)
       },
       mediaScanner = mockk<MediaScanTrigger> {
-        every { scannerActive } returns MutableStateFlow(false)
+        every { scannerActive } returns scanning
         every { scan(any()) } just Runs
       },
       playStateManager = PlayStateManager(),
@@ -335,6 +417,8 @@ class BookOverviewViewModelTest {
       kioskModeFeatureFlag = MemoryFeatureFlag(false),
       dispatcherProvider = dispatcherProvider,
       serverLibrary = serverLibrary,
+      audiobookFolders = audiobookFolders,
+      emptyLibraryTracker = emptyLibraryTracker,
     )
   }
 

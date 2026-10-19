@@ -1,5 +1,6 @@
 package voice.features.settings
 
+import android.net.Uri
 import app.cash.molecule.RecompositionMode
 import app.cash.molecule.launchMolecule
 import app.cash.turbine.test
@@ -56,6 +57,7 @@ class SettingsViewModelTest {
   private val scope = TestScope()
   private val themeModeStore = MemoryDataStore(ThemeMode.FollowSystem)
   private val themeColorSchemeStore = MemoryDataStore(ThemeColorScheme.VoiceBlue)
+  private val pureBlackStore = MemoryDataStore(false)
   private val autoRewindAmountStore = MemoryDataStore(10)
   private val seekTimeStore = MemoryDataStore(30)
   private val lockScreenSliderStore = MemoryDataStore(true)
@@ -87,11 +89,13 @@ class SettingsViewModelTest {
   }
   private val audiobookFolders = mockk<AudiobookFolders> {
     every { all() } returns flowOf(emptyMap())
+    every { withoutAccess() } returns flowOf(emptyMap())
   }
 
   private val viewModel = SettingsViewModel(
     themeModeStore = themeModeStore,
     themeColorSchemeStore = themeColorSchemeStore,
+    pureBlackStore = pureBlackStore,
     autoRewindAmountStore = autoRewindAmountStore,
     seekTimeStore = seekTimeStore,
     lockScreenSliderStore = lockScreenSliderStore,
@@ -330,6 +334,18 @@ class SettingsViewModelTest {
   }
 
   @Test
+  fun `view state tells about folders without access`() = scope.runTest {
+    every { audiobookFolders.withoutAccess() } returns flowOf(mapOf(FolderType.Root to listOf(mockk<Uri>())))
+
+    backgroundScope.launchMolecule(RecompositionMode.Immediate) {
+      viewModel.viewState()
+    }.filterNotNull().test {
+      runCurrent()
+      assertEquals(expected = true, actual = expectMostRecentItem().foldersWithoutAccess)
+    }
+  }
+
+  @Test
   fun `kiosk mode shows sample folder names`() = scope.runTest {
     kioskModeFeatureFlag.value = true
 
@@ -455,6 +471,22 @@ class SettingsViewModelTest {
 
       viewModel.toggleLockScreenSlider()
       assertTrue(awaitItem().lockScreenSlider)
+    }
+  }
+
+  @Test
+  fun `pure black can be turned on and off again`() = scope.runTest {
+    backgroundScope.launchMolecule(RecompositionMode.Immediate) {
+      viewModel.viewState()
+    }.filterNotNull().test {
+      assertFalse(awaitItem().pureBlack)
+
+      viewModel.togglePureBlack()
+      assertTrue(awaitItem().pureBlack)
+      assertTrue(pureBlackStore.data.first())
+
+      viewModel.togglePureBlack()
+      assertFalse(awaitItem().pureBlack)
     }
   }
 }

@@ -94,6 +94,7 @@ fun BookOverviewScreen(modifier: Modifier = Modifier) {
     onPlayButtonClick = bookOverviewViewModel::playPause,
     onSearchClick = bookOverviewViewModel::onSearchClick,
     onPermissionBugCardClick = bookOverviewViewModel::onPermissionBugCardClick,
+    onShowFoldersClick = bookOverviewViewModel::onShowFoldersClick,
     modifier = modifier,
   )
 }
@@ -109,6 +110,7 @@ internal fun BookOverview(
   onPlayButtonClick: () -> Unit,
   onSearchClick: () -> Unit,
   onPermissionBugCardClick: () -> Unit,
+  onShowFoldersClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   val scrollBehavior = SearchBarDefaults.enterAlwaysSearchBarScrollBehavior()
@@ -119,7 +121,7 @@ internal fun BookOverview(
       LibraryTopBar(
         showSearch = viewState.showSearchIcon,
         showFolderPickerIcon = viewState.showFolderPickerIcon,
-        showAddBookHint = viewState.showAddBookHint,
+        showFolderAccessBadge = viewState.showFolderAccessBadge,
         isLoading = viewState.isLoading,
         scrollBehavior = scrollBehavior,
         onSearchClick = onSearchClick,
@@ -151,6 +153,7 @@ internal fun BookOverview(
       onBookLongClick = onBookLongClick,
       onPlayClick = onPlayButtonClick,
       onPermissionBugCardClick = onPermissionBugCardClick,
+      onShowFoldersClick = onShowFoldersClick,
       modifier = Modifier
         .padding(contentPadding)
         .consumeWindowInsets(contentPadding),
@@ -227,6 +230,7 @@ fun BookOverviewPreview(
       onPlayButtonClick = {},
       onSearchClick = {},
       onPermissionBugCardClick = {},
+      onShowFoldersClick = {},
     )
   }
 }
@@ -267,12 +271,19 @@ internal class BookOverviewPreviewParameterProvider : PreviewParameterProvider<B
       ),
       layoutMode = BookOverviewLayoutMode.List,
       playButtonState = BookOverviewViewState.PlayButtonState.Paused,
-      showAddBookHint = false,
+      showEmptyLibrary = false,
       showSearchIcon = true,
       isLoading = true,
       showStoragePermissionBugCard = false,
+      showFolderAccessBadge = false,
       showFolderPickerIcon = true,
       dialog = null,
+    ),
+    BookOverviewViewState.Loading.copy(
+      isLoading = false,
+      showEmptyLibrary = true,
+      showFolderAccessBadge = true,
+      showFolderPickerIcon = false,
     ),
   )
 }

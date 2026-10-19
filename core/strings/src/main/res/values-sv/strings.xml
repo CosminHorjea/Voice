@@ -63,7 +63,7 @@
     <string name="book.category.action.mark_not_started">Markera som inte påbörjad</string>
     <string name="book.delete.bottom_sheet.title">Ta bort bok</string>
     <string name="book.delete.dialog.confirm_files">Ta bort mina filer</string>
-    <string name="book.delete.dialog.message">Detta kommer att radera filerna på din enhet.</string>
+    <string name="book.delete.dialog.message">Filerna tas bort permanent från din enhet. Du kan inte få tillbaka dem.</string>
     <string name="book.delete.dialog.title">Ta bort bok</string>
     <string name="book.download.action">Ladda ned</string>
     <string name="book.download.failed">Nedladdningen blev inte klar</string>
@@ -187,19 +187,27 @@
         <item quantity="one">%d ljudfil</item>
         <item quantity="other">%d ljudfiler</item>
     </plurals>
-    <string name="history.action.continue_from">Fortsätt från %1$s</string>
-    <string name="history.action.continue_from.chapter">Fortsätt från kap. %1$d · %2$s</string>
     <string name="history.empty.message">Uppspelningar, pauser och hopp visas här, så att du alltid hittar tillbaka.</string>
     <string name="history.empty.title">Inget här än</string>
     <string name="history.event.bookmark_jump">Gick till ett bokmärke</string>
     <string name="history.event.chapter_change">Bytte kapitel</string>
-    <string name="history.event.dozed_off">Slumrade till · timern gick ut</string>
+    <string name="history.event.interrupted">Avbröts i %s</string>
     <string name="history.event.jump_back">Hoppade tillbaka</string>
     <string name="history.event.moved">Flyttade</string>
+    <string name="history.event.paused">Pausade</string>
     <string name="history.event.played">Spelade</string>
-    <string name="history.event.sleep_timer_set">Insomningstimer</string>
+    <plurals name="history.event.rewound">
+        <item quantity="one">Spolade bakåt %d gång</item>
+        <item quantity="other">Spolade bakåt %d gånger</item>
+    </plurals>
+    <string name="history.event.shook">Skakade för att lyssna vidare</string>
+    <plurals name="history.event.skipped_ahead">
+        <item quantity="one">Spolade framåt %d gång</item>
+        <item quantity="other">Spolade framåt %d gånger</item>
+    </plurals>
+    <string name="history.event.sleep_timer_ended">Insomningstimern gick ut</string>
+    <string name="history.event.sleep_timer_on">Startade insomningstimern</string>
     <string name="history.location.chapter">Kap. %1$d · %2$s</string>
-    <string name="history.source.app">I appen</string>
     <string name="history.source.audio_focus">Avbrott</string>
     <string name="history.source.bluetooth">Bluetooth-enhet</string>
     <string name="history.source.car">Bil</string>
@@ -207,8 +215,6 @@
     <string name="history.source.notification">Avisering</string>
     <string name="history.source.other_app">En annan app</string>
     <string name="history.source.other_device">En annan enhet</string>
-    <string name="history.source.sleep_timer">Insomningstimer</string>
-    <string name="history.source.unknown">Okänd</string>
     <string name="history.source.unplugged">Ljudet kopplades från</string>
     <string name="history.source.watch">Klocka</string>
     <string name="history.source.widget">Widget</string>
@@ -219,9 +225,15 @@
     <string name="library.category.not_started.title">Inte påbörjade</string>
     <string name="library.continue_listening">Fortsätt lyssna</string>
     <string name="library.empty.add_first_book">Lägg till din ljudboksmapp för att börja lyssna!</string>
+    <string name="library.empty.title">Inga ljudböcker hittades</string>
+    <string name="library.empty.message">Voice hittar inga ljudböcker i dina mappar. Kontrollera att filerna finns kvar, eller lägg till en mapp.</string>
+    <string name="library.empty.action">Visa mappar</string>
     <string name="library.folders.title">Ljudboksmappar</string>
     <string name="library.folders.moved.dialog.title">Ljudboksmapparna har flyttats</string>
     <string name="library.folders.moved.dialog.message">Du kan nu hantera ljudboksmappar under Inställningar.</string>
+    <string name="library.folders.no_access">Ingen åtkomst</string>
+    <string name="library.folders.no_access.action">Tillåt åtkomst</string>
+    <string name="library.folders.no_access.badge">Tillåt åtkomst till dina mappar igen</string>
     <string name="library.greeting.afternoon">God eftermiddag</string>
     <string name="library.greeting.evening">God kväll</string>
     <string name="library.greeting.morning">God morgon</string>
@@ -336,6 +348,8 @@
     <string name="settings.appearance.color_scheme.dynamic">Dynamisk färg</string>
     <string name="settings.appearance.color_scheme.dynamic.summary">Använder färger från bakgrundsbilden och systemets tema.</string>
     <string name="settings.appearance.color_scheme.voice_blue">Voice-blå</string>
+    <string name="settings.appearance.pure_black.summary">Sparar batteri på OLED-skärmar i mörkt tema.</string>
+    <string name="settings.appearance.pure_black.title">Helsvart</string>
     <string name="settings.appearance.theme.dark">Mörkt</string>
     <string name="settings.appearance.theme.follow_system">Följ systemet</string>
     <string name="settings.appearance.theme.light">Ljust</string>
@@ -380,8 +394,7 @@
     <string name="support.badges.title">Ditt märke växer för varje månad du stöttar</string>
     <string name="support.action.donate_kofi">Donera på Ko-fi</string>
     <string name="support.description.maintenance">Voice är gratis, har öppen källkod och underhålls av en enda utvecklare.</string>
-    <string name="support.description.maintenance_subtitle">Donationer bidrar till löpande underhåll och utveckling.</string>
-    <string name="support.description.play">Månatligt stöd gör att jag kan planera nästa version, inte bara nästa buggfix.</string>
+    <string name="support.description.monthly">Månatligt stöd gör att jag kan planera nästa version, inte bara nästa buggfix.</string>
     <string name="support.fine_print">Ett tack: låser inte upp något. Säg upp när som helst i Google Play.</string>
     <string name="support.fine_print.tip">Ett tack: låser inte upp något. Ingen prenumeration.</string>
     <string name="support.helps.title">Ditt stöd bidrar till</string>
@@ -389,7 +402,7 @@
     <string name="support.helps.features">Nya funktioner</string>
     <string name="support.helps.open_source">Att Voice kan förbli reklamfri</string>
     <string name="support.hero.title">Låt Voice tala vidare</string>
-    <string name="support.kofi.hint">Ko-fi öppnas i webbläsaren. Varje belopp hjälper.</string>
+    <string name="support.kofi.hint">Ko-fi öppnas i webbläsaren. Månadsvis eller en gång, utan konto.</string>
     <string name="support.message.failed">Det fungerade inte. Försök igen om en stund.</string>
     <string name="support.message.pending">Ditt te står och drar. Märket dyker upp när Google har bekräftat betalningen.</string>
     <string name="support.period.monthly">Månadsvis</string>

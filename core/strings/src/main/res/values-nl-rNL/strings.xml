@@ -63,7 +63,7 @@
     <string name="book.category.action.mark_not_started">Markeren als nog niet aan begonnen</string>
     <string name="book.delete.bottom_sheet.title">Boek verwijderen</string>
     <string name="book.delete.dialog.confirm_files">Mijn bestanden verwijderen</string>
-    <string name="book.delete.dialog.message">Hierdoor worden alle bestanden op je apparaat verwijderd.</string>
+    <string name="book.delete.dialog.message">De bestanden worden voorgoed van je apparaat verwijderd. Je kunt ze niet terugkrijgen.</string>
     <string name="book.delete.dialog.title">Boek verwijderen</string>
     <string name="book.download.action">Downloaden</string>
     <string name="book.download.failed">De download is niet gelukt</string>
@@ -187,19 +187,27 @@
         <item quantity="one">%d audiobestand</item>
         <item quantity="other">%d audiobestanden</item>
     </plurals>
-    <string name="history.action.continue_from">Verder vanaf %1$s</string>
-    <string name="history.action.continue_from.chapter">Verder vanaf hfst. %1$d · %2$s</string>
     <string name="history.empty.message">Afspelen, pauzes en sprongen worden hier getoond, zodat je altijd je weg terugvindt.</string>
     <string name="history.empty.title">Nog niets te zien</string>
     <string name="history.event.bookmark_jump">Naar bladwijzer gegaan</string>
     <string name="history.event.chapter_change">Ander hoofdstuk</string>
-    <string name="history.event.dozed_off">Ingedut · timer afgelopen</string>
+    <string name="history.event.interrupted">%s onderbroken</string>
     <string name="history.event.jump_back">Teruggesprongen</string>
     <string name="history.event.moved">Verschoven</string>
+    <string name="history.event.paused">Gepauzeerd</string>
     <string name="history.event.played">Afgespeeld</string>
-    <string name="history.event.sleep_timer_set">Slaaptimer</string>
+    <plurals name="history.event.rewound">
+        <item quantity="one">%d keer teruggespoeld</item>
+        <item quantity="other">%d keer teruggespoeld</item>
+    </plurals>
+    <string name="history.event.shook">Geschud om verder te luisteren</string>
+    <plurals name="history.event.skipped_ahead">
+        <item quantity="one">%d keer vooruitgespoeld</item>
+        <item quantity="other">%d keer vooruitgespoeld</item>
+    </plurals>
+    <string name="history.event.sleep_timer_ended">Slaaptimer afgelopen</string>
+    <string name="history.event.sleep_timer_on">Slaaptimer ingesteld</string>
     <string name="history.location.chapter">Hfst. %1$d · %2$s</string>
-    <string name="history.source.app">In de app</string>
     <string name="history.source.audio_focus">Onderbroken</string>
     <string name="history.source.bluetooth">Bluetooth-apparaat</string>
     <string name="history.source.car">Auto</string>
@@ -207,8 +215,6 @@
     <string name="history.source.notification">Melding</string>
     <string name="history.source.other_app">Andere app</string>
     <string name="history.source.other_device">Ander apparaat</string>
-    <string name="history.source.sleep_timer">Slaaptimer</string>
-    <string name="history.source.unknown">Onbekend</string>
     <string name="history.source.unplugged">Audio losgekoppeld</string>
     <string name="history.source.watch">Horloge</string>
     <string name="history.source.widget">Widget</string>
@@ -219,9 +225,15 @@
     <string name="library.category.not_started.title">Nog niet begonnen</string>
     <string name="library.continue_listening">Verder luisteren</string>
     <string name="library.empty.add_first_book">Laten we je luisterboekmap toevoegen om te beginnen met luisteren!</string>
+    <string name="library.empty.title">Geen luisterboeken gevonden</string>
+    <string name="library.empty.message">Voice kan geen luisterboeken vinden in je mappen. Controleer of de bestanden er nog staan, of voeg een map toe.</string>
+    <string name="library.empty.action">Mappen tonen</string>
     <string name="library.folders.title">Luisterboekmappen</string>
     <string name="library.folders.moved.dialog.title">Audioboekmappen verplaatst</string>
     <string name="library.folders.moved.dialog.message">Je kunt audioboekmappen nu beheren in Instellingen.</string>
+    <string name="library.folders.no_access">Geen toegang</string>
+    <string name="library.folders.no_access.action">Toegang toestaan</string>
+    <string name="library.folders.no_access.badge">Geef Voice weer toegang tot je mappen</string>
     <string name="library.greeting.afternoon">Goedemiddag</string>
     <string name="library.greeting.evening">Goedenavond</string>
     <string name="library.greeting.morning">Goedemorgen</string>
@@ -336,6 +348,8 @@
     <string name="settings.appearance.color_scheme.dynamic">Dynamische kleur</string>
     <string name="settings.appearance.color_scheme.dynamic.summary">Gebruikt kleuren van je achtergrond en systeemthema.</string>
     <string name="settings.appearance.color_scheme.voice_blue">Voice-blauw</string>
+    <string name="settings.appearance.pure_black.summary">Bespaart batterij op OLED-schermen in het donkere thema.</string>
+    <string name="settings.appearance.pure_black.title">Puur zwart</string>
     <string name="settings.appearance.theme.dark">Donker</string>
     <string name="settings.appearance.theme.follow_system">Systeem volgen</string>
     <string name="settings.appearance.theme.light">Licht</string>
@@ -380,8 +394,7 @@
     <string name="support.badges.title">Je badge groeit elke maand dat je steunt</string>
     <string name="support.action.donate_kofi">Doneren op Ko-fi</string>
     <string name="support.description.maintenance">Voice is gratis, open source en wordt onderhouden door één ontwikkelaar.</string>
-    <string name="support.description.maintenance_subtitle">Donaties helpen doorlopend onderhoud en ontwikkeling te financieren.</string>
-    <string name="support.description.play">Met maandelijkse steun kan ik de volgende versie plannen, niet alleen de volgende bugfix.</string>
+    <string name="support.description.monthly">Met maandelijkse steun kan ik de volgende versie plannen, niet alleen de volgende bugfix.</string>
     <string name="support.fine_print">Een bedankje: ontgrendelt niets. Altijd opzegbaar in Google Play.</string>
     <string name="support.fine_print.tip">Een bedankje: ontgrendelt niets. Geen abonnement.</string>
     <string name="support.helps.title">Steun helpt met</string>
@@ -389,7 +402,7 @@
     <string name="support.helps.features">Nieuwe functies</string>
     <string name="support.helps.open_source">Voice advertentievrij houden</string>
     <string name="support.hero.title">Houd Voice aan het woord</string>
-    <string name="support.kofi.hint">Ko-fi opent in je browser. Elk bedrag helpt.</string>
+    <string name="support.kofi.hint">Ko-fi opent in je browser. Maandelijks of eenmalig, zonder account.</string>
     <string name="support.message.failed">Dat lukte niet. Probeer het zo nog eens.</string>
     <string name="support.message.pending">Je thee staat te trekken. Je badge verschijnt zodra Google de betaling bevestigt.</string>
     <string name="support.period.monthly">Maandelijks</string>

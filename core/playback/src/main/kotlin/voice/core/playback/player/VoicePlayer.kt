@@ -61,7 +61,16 @@ class VoicePlayer(
   private val commandSourceResolver: CommandSourceResolver,
 ) : ForwardingPlayer(player) {
 
+  private var skipSilence = false
+
   private val endOfChapterSleepTimerListener = object : Player.Listener {
+    override fun onMediaItemTransition(
+      mediaItem: MediaItem?,
+      reason: Int,
+    ) {
+      player.setSkipSilenceEnabled(skipSilence)
+    }
+
     override fun onPositionDiscontinuity(
       oldPosition: Player.PositionInfo,
       newPosition: Player.PositionInfo,
@@ -118,6 +127,21 @@ class VoicePlayer(
   init {
     player.addListener(endOfChapterSleepTimerListener)
     player.addListener(autoRewindListener)
+    // ExoPlayer adds skipped silence to the position as soon as it processes it, while the audio before it still
+    // plays. So the position would reach the end of the chapter, and the sleep timer would pause, before its last
+    // words were heard.
+    player.onChapterEnding = {
+      val pausesAtChapterEnd = when (val state = sleepTimer.state.value) {
+        SleepTimerState.Enabled.WithEndOfChapter -> true
+        is SleepTimerState.Enabled.AfterChapter -> player.currentMediaItemIndex >= state.chapterIndex
+        is SleepTimerState.Enabled.WithDuration,
+        SleepTimerState.Disabled,
+        -> false
+      }
+      if (pausesAtChapterEnd) {
+        player.setSkipSilenceEnabled(false)
+      }
+    }
   }
 
   // The app changes chapters through custom commands that end up here, because its controller can still hold the book
@@ -318,9 +342,7 @@ class VoicePlayer(
     val bookId = player.currentMediaItem?.mediaId?.toMediaIdOrNull()?.bookId ?: return
     scope.launch {
       repo.updateBook(bookId) {
-        val lastPlayedAt = Instant.now()
-        Logger.v("Update ${it.name}: lastPlayedAt to $lastPlayedAt")
-        it.copy(lastPlayedAt = lastPlayedAt)
+        it.copy(lastPlayedAt = Instant.now())
       }
     }
   }
@@ -366,7 +388,6 @@ class VoicePlayer(
   }
 
   private fun setBook(mediaItem: MediaItem) {
-    Logger.v("setBook(${mediaItem.mediaId})")
     val mediaId = mediaItem.mediaId.toMediaIdOrNull()
     if (mediaId != null) {
       if (mediaId is MediaId.Book) {
@@ -395,7 +416,7 @@ class VoicePlayer(
           )
         }
       } else {
-        Logger.w("Unexpected mediaId=$mediaId")
+        Logger.w("Unexpected media id type ${mediaId::class.simpleName}")
       }
     }
   }
@@ -418,6 +439,7 @@ class VoicePlayer(
   }
 
   fun setSkipSilenceEnabled(enabled: Boolean) {
+    skipSilence = enabled
     scope.launch {
       updateBook { it.copy(skipSilence = enabled) }
     }

@@ -43,9 +43,10 @@ public data class ListeningEvent(
 
     /**
      * Not recorded anymore. Only the nights from back when the sleep timer set a bookmark where it
-     * started have it.
+     * started have it, and those are kept past the limit of events, unlike [SleepTimerStarted].
      */
     SleepTimerSet,
+    SleepTimerStarted,
     SleepTimerEnded,
     SleepTimerExtended,
   }
@@ -64,7 +65,7 @@ public data class ListeningEvent(
     SleepTimer,
     Unknown,
 
-    /** The position came from another device, through the server. */
+    /** The position came from another device, through the server or a synced library folder. */
     OtherDevice,
   }
 }

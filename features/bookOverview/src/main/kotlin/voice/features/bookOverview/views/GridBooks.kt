@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import voice.core.data.BookId
+import voice.core.ui.bookText
 import voice.features.bookOverview.overview.BookOverviewItemViewState
 import kotlin.math.roundToInt
 
@@ -53,27 +54,30 @@ internal fun GridBook(
         .fillMaxWidth()
         .aspectRatio(1F),
     )
+    // right under the cover, so the bars in a row line up however long the titles are
+    if (!finished && book.progress > 0F) {
+      Spacer(Modifier.height(8.dp))
+      LinearProgressIndicator(
+        progress = { book.progress },
+        modifier = Modifier.fillMaxWidth(),
+        gapSize = 0.dp,
+        drawStopIndicator = {},
+      )
+    }
     Spacer(Modifier.height(8.dp))
     Text(
       text = book.name,
-      style = MaterialTheme.typography.titleSmallEmphasized,
+      style = MaterialTheme.typography.titleSmallEmphasized.bookText(),
       maxLines = 2,
       overflow = TextOverflow.Ellipsis,
     )
     if (book.author != null) {
       Text(
         text = book.author,
-        style = MaterialTheme.typography.labelMedium,
+        style = MaterialTheme.typography.labelMedium.bookText(),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
-      )
-    }
-    if (!finished && book.progress > 0F) {
-      Spacer(Modifier.height(6.dp))
-      LinearProgressIndicator(
-        progress = { book.progress },
-        modifier = Modifier.fillMaxWidth(),
       )
     }
   }

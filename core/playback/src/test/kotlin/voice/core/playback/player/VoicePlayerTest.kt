@@ -33,8 +33,6 @@ import voice.core.data.ChapterMark
 import voice.core.data.ListeningEvent
 import voice.core.data.MarkData
 import voice.core.data.repo.ListeningHistoryRepo
-import voice.core.logging.api.LogWriter
-import voice.core.logging.api.Logger
 import voice.core.playback.MemoryDataStore
 import voice.core.playback.history.CommandSourceResolver
 import voice.core.playback.history.ListeningHistoryRecorder
@@ -54,25 +52,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 import kotlin.uuid.Uuid
 
 @RunWith(AndroidJUnit4::class)
 class VoicePlayerTest {
-
-  init {
-    Logger.install(
-      object : LogWriter {
-        override fun log(
-          severity: Logger.Severity,
-          message: String,
-          throwable: Throwable?,
-        ) {
-          println("$severity: $message")
-          throwable?.printStackTrace()
-        }
-      },
-    )
-  }
 
   private val seekTimeStore = MemoryDataStore(2)
   private val autoRewindAmountStore = MemoryDataStore(2)
@@ -547,6 +531,74 @@ class VoicePlayerTest {
     assertEquals(expected = Player.STATE_ENDED, actual = internalPlayer.playbackState)
     assertFalse(player.playWhenReady)
     assertEquals(expected = SleepTimerState.Disabled, actual = sleepTimer.state.value)
+  }
+
+  @Test
+  fun `end of chapter sleep timer keeps the silence at the end of the chapter`() = scope.runTest {
+    setMediaItems(
+      listOf(
+        chapter(
+          ChapterMark(startMs = 0, endMs = 9_999, name = null),
+          ChapterMark(startMs = 10_000, endMs = 20_000, name = null),
+        ),
+      ),
+    )
+    player.setSkipSilenceEnabled(true)
+    player.prepare()
+    awaitReady()
+    sleepTimer.enable(SleepTimerMode.EndOfChapter)
+
+    TestPlayerRunHelper.play(internalPlayer).untilPositionAtLeast(0, 3_000)
+    assertTrue(internalPlayer.skipSilenceEnabled)
+
+    TestPlayerRunHelper.advance(internalPlayer).untilPositionAtLeast(0, 6_000)
+    assertFalse(internalPlayer.skipSilenceEnabled)
+
+    TestPlayerRunHelper.advance(internalPlayer).untilPlayWhenReadyIs(false)
+    player.shouldHavePosition(1, 0)
+    assertTrue(internalPlayer.skipSilenceEnabled)
+  }
+
+  @Test
+  fun `skip silence stays on at the end of the chapter without the end of chapter sleep timer`() = scope.runTest {
+    setMediaItems(
+      listOf(
+        chapter(
+          ChapterMark(startMs = 0, endMs = 9_999, name = null),
+          ChapterMark(startMs = 10_000, endMs = 20_000, name = null),
+        ),
+      ),
+    )
+    player.setSkipSilenceEnabled(true)
+    player.prepare()
+    awaitReady()
+
+    TestPlayerRunHelper.play(internalPlayer).untilPositionAtLeast(0, 6_000)
+
+    assertTrue(internalPlayer.skipSilenceEnabled)
+  }
+
+  @Test
+  fun `skip silence comes back in the next chapter when the end of chapter sleep timer was disabled`() = scope.runTest {
+    setMediaItems(
+      listOf(
+        chapter(
+          ChapterMark(startMs = 0, endMs = 9_999, name = null),
+          ChapterMark(startMs = 10_000, endMs = 20_000, name = null),
+        ),
+      ),
+    )
+    player.setSkipSilenceEnabled(true)
+    player.prepare()
+    awaitReady()
+    sleepTimer.enable(SleepTimerMode.EndOfChapter)
+
+    TestPlayerRunHelper.play(internalPlayer).untilPositionAtLeast(0, 6_000)
+    sleepTimer.disable()
+    TestPlayerRunHelper.advance(internalPlayer).untilPositionAtLeast(0, 11_000)
+
+    assertTrue(player.playWhenReady)
+    assertTrue(internalPlayer.skipSilenceEnabled)
   }
 
   @Test

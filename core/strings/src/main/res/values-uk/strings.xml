@@ -69,7 +69,7 @@
     <string name="book.category.action.mark_not_started">Позначити як ще не почате</string>
     <string name="book.delete.bottom_sheet.title">Видалити книгу</string>
     <string name="book.delete.dialog.confirm_files">Видалити мої файли</string>
-    <string name="book.delete.dialog.message">Файли на вашому пристрої буде видалено.</string>
+    <string name="book.delete.dialog.message">Файли буде назавжди видалено з вашого пристрою. Відновити їх не вдасться.</string>
     <string name="book.delete.dialog.title">Видалити книгу</string>
     <string name="book.download.action">Завантажити</string>
     <string name="book.download.failed">Завантаження не завершилося</string>
@@ -209,19 +209,31 @@
         <item quantity="many">%d аудіофайлів</item>
         <item quantity="other">%d аудіофайлів</item>
     </plurals>
-    <string name="history.action.continue_from">Продовжити з %1$s</string>
-    <string name="history.action.continue_from.chapter">Продовжити з розд. %1$d · %2$s</string>
     <string name="history.empty.message">Відтворення, паузи й переходи зберігаються тут, тож ви завжди знайдете, де зупинилися.</string>
     <string name="history.empty.title">Тут поки порожньо</string>
     <string name="history.event.bookmark_jump">Перехід до закладки</string>
     <string name="history.event.chapter_change">Зміна розділу</string>
-    <string name="history.event.dozed_off">Задрімали · таймер завершився</string>
+    <string name="history.event.interrupted">Перервано на %s</string>
     <string name="history.event.jump_back">Повернення на попереднє місце</string>
     <string name="history.event.moved">Зміщення позиції</string>
+    <string name="history.event.paused">Призупинено</string>
     <string name="history.event.played">Відтворення</string>
-    <string name="history.event.sleep_timer_set">Таймер сну</string>
+    <plurals name="history.event.rewound">
+        <item quantity="one">Перемотано назад %d раз</item>
+        <item quantity="few">Перемотано назад %d рази</item>
+        <item quantity="many">Перемотано назад %d разів</item>
+        <item quantity="other">Перемотано назад %d раза</item>
+    </plurals>
+    <string name="history.event.shook">Подовжено струшуванням</string>
+    <plurals name="history.event.skipped_ahead">
+        <item quantity="one">Перемотано вперед %d раз</item>
+        <item quantity="few">Перемотано вперед %d рази</item>
+        <item quantity="many">Перемотано вперед %d разів</item>
+        <item quantity="other">Перемотано вперед %d раза</item>
+    </plurals>
+    <string name="history.event.sleep_timer_ended">Таймер сну спрацював</string>
+    <string name="history.event.sleep_timer_on">Таймер сну увімкнено</string>
     <string name="history.location.chapter">Розд. %1$d · %2$s</string>
-    <string name="history.source.app">У додатку</string>
     <string name="history.source.audio_focus">Перервано</string>
     <string name="history.source.bluetooth">Bluetooth-пристрій</string>
     <string name="history.source.car">Автомобіль</string>
@@ -229,8 +241,6 @@
     <string name="history.source.notification">Сповіщення</string>
     <string name="history.source.other_app">Інший додаток</string>
     <string name="history.source.other_device">Інший пристрій</string>
-    <string name="history.source.sleep_timer">Таймер сну</string>
-    <string name="history.source.unknown">Невідомо</string>
     <string name="history.source.unplugged">Аудіопристрій від’єднано</string>
     <string name="history.source.watch">Годинник</string>
     <string name="history.source.widget">Віджет</string>
@@ -241,9 +251,15 @@
     <string name="library.category.not_started.title">Ще не початі</string>
     <string name="library.continue_listening">Продовжити слухання</string>
     <string name="library.empty.add_first_book">Давайте додамо папку з аудіокнигами, щоб ви могли почати прослуховування!</string>
+    <string name="library.empty.title">Аудіокниг не знайдено</string>
+    <string name="library.empty.message">Voice не знаходить аудіокниг у ваших папках. Перевірте, чи файли досі на місці, або додайте папку.</string>
+    <string name="library.empty.action">Показати папки</string>
     <string name="library.folders.title">Папки з аудіокнигами</string>
     <string name="library.folders.moved.dialog.title">Папки аудіокниг переміщено</string>
     <string name="library.folders.moved.dialog.message">Тепер папками аудіокниг можна керувати в налаштуваннях.</string>
+    <string name="library.folders.no_access">Немає доступу</string>
+    <string name="library.folders.no_access.action">Дозволити доступ</string>
+    <string name="library.folders.no_access.badge">Знову дозвольте доступ до своїх папок</string>
     <string name="library.greeting.afternoon">Добрий день</string>
     <string name="library.greeting.evening">Добрий вечір</string>
     <string name="library.greeting.morning">Доброго ранку</string>
@@ -368,6 +384,8 @@
     <string name="settings.appearance.color_scheme.dynamic">Динамічний колір</string>
     <string name="settings.appearance.color_scheme.dynamic.summary">Використовує кольори з ваших шпалер і системної теми.</string>
     <string name="settings.appearance.color_scheme.voice_blue">Синій Voice</string>
+    <string name="settings.appearance.pure_black.summary">Заощаджує заряд батареї на OLED-екранах у темній темі.</string>
+    <string name="settings.appearance.pure_black.title">Повністю чорний</string>
     <string name="settings.appearance.theme.dark">Темна</string>
     <string name="settings.appearance.theme.follow_system">Як у системі</string>
     <string name="settings.appearance.theme.light">Світла</string>
@@ -412,8 +430,7 @@
     <string name="support.badges.title">Ваш значок росте з кожним місяцем підтримки</string>
     <string name="support.action.donate_kofi">Задонатити на Ko-fi</string>
     <string name="support.description.maintenance">Voice безкоштовний, з відкритим кодом і підтримується одним розробником.</string>
-    <string name="support.description.maintenance_subtitle">Донати допомагають фінансувати постійну підтримку та розробку.</string>
-    <string name="support.description.play">Щомісячна підтримка дає мені змогу планувати наступну версію, а не лише наступне виправлення.</string>
+    <string name="support.description.monthly">Щомісячна підтримка дає мені змогу планувати наступну версію, а не лише наступне виправлення.</string>
     <string name="support.fine_print">Це подяка: нічого не відкриває. Скасувати можна будь-коли в Google Play.</string>
     <string name="support.fine_print.tip">Це подяка: нічого не відкриває. Без підписки.</string>
     <string name="support.helps.title">Підтримка допомагає з</string>
@@ -421,7 +438,7 @@
     <string name="support.helps.features">Новими функціями</string>
     <string name="support.helps.open_source">Збереженням Voice без реклами</string>
     <string name="support.hero.title">Нехай Voice не замовкає</string>
-    <string name="support.kofi.hint">Ko-fi відкриється в браузері. Будь-яка сума допоможе.</string>
+    <string name="support.kofi.hint">Ko-fi відкриється в браузері. Щомісяця або разово, без реєстрації.</string>
     <string name="support.message.failed">Не вийшло. Спробуйте ще раз трохи згодом.</string>
     <string name="support.message.pending">Ваш чай заварюється. Значок з\'явиться, щойно Google підтвердить платіж.</string>
     <string name="support.period.monthly">Щомісяця</string>

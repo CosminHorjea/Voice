@@ -69,7 +69,7 @@
     <string name="book.category.action.mark_not_started">Označiť ako ešte nepočúvané</string>
     <string name="book.delete.bottom_sheet.title">Zmazať knihu</string>
     <string name="book.delete.dialog.confirm_files">Vymazať moje súbory</string>
-    <string name="book.delete.dialog.message">Týmto odstránite súbory zo zariadenia.</string>
+    <string name="book.delete.dialog.message">Súbory sa natrvalo odstránia z vášho zariadenia. Už ich nebude možné obnoviť.</string>
     <string name="book.delete.dialog.title">Vymazať knihu</string>
     <string name="book.download.action">Stiahnuť</string>
     <string name="book.download.failed">Sťahovanie sa nepodarilo dokončiť</string>
@@ -209,19 +209,31 @@
         <item quantity="many">%d zvukových súborov</item>
         <item quantity="other">%d zvukových súborov</item>
     </plurals>
-    <string name="history.action.continue_from">Pokračovať od %1$s</string>
-    <string name="history.action.continue_from.chapter">Pokračovať od kap. %1$d · %2$s</string>
     <string name="history.empty.message">Prehrávania, pozastavenia a skoky sa tu zobrazujú, takže vždy nájdete cestu späť.</string>
     <string name="history.empty.title">Zatiaľ tu nič nie je</string>
     <string name="history.event.bookmark_jump">Prechod na záložku</string>
     <string name="history.event.chapter_change">Zmena kapitoly</string>
-    <string name="history.event.dozed_off">Zaspali ste · časovač skončil</string>
+    <string name="history.event.interrupted">Prerušené na %s</string>
     <string name="history.event.jump_back">Návrat späť</string>
     <string name="history.event.moved">Posun pozície</string>
+    <string name="history.event.paused">Pozastavené</string>
     <string name="history.event.played">Spustené</string>
-    <string name="history.event.sleep_timer_set">Časovač spánku</string>
+    <plurals name="history.event.rewound">
+        <item quantity="one">Pretočené dozadu %d×</item>
+        <item quantity="few">Pretočené dozadu %d×</item>
+        <item quantity="many">Pretočené dozadu %d×</item>
+        <item quantity="other">Pretočené dozadu %d×</item>
+    </plurals>
+    <string name="history.event.shook">Predĺžené zatrasením</string>
+    <plurals name="history.event.skipped_ahead">
+        <item quantity="one">Pretočené dopredu %d×</item>
+        <item quantity="few">Pretočené dopredu %d×</item>
+        <item quantity="many">Pretočené dopredu %d×</item>
+        <item quantity="other">Pretočené dopredu %d×</item>
+    </plurals>
+    <string name="history.event.sleep_timer_ended">Časovač spánku vypršal</string>
+    <string name="history.event.sleep_timer_on">Časovač spánku zapnutý</string>
     <string name="history.location.chapter">Kap. %1$d · %2$s</string>
-    <string name="history.source.app">V aplikácii</string>
     <string name="history.source.audio_focus">Prerušené</string>
     <string name="history.source.bluetooth">Zariadenie Bluetooth</string>
     <string name="history.source.car">Auto</string>
@@ -229,8 +241,6 @@
     <string name="history.source.notification">Upozornenie</string>
     <string name="history.source.other_app">Iná aplikácia</string>
     <string name="history.source.other_device">Iné zariadenie</string>
-    <string name="history.source.sleep_timer">Časovač spánku</string>
-    <string name="history.source.unknown">Neznámy</string>
     <string name="history.source.unplugged">Zvukové zariadenie odpojené</string>
     <string name="history.source.watch">Hodinky</string>
     <string name="history.source.widget">Miniaplikácia</string>
@@ -241,9 +251,15 @@
     <string name="library.category.not_started.title">Ešte nepočúvané</string>
     <string name="library.continue_listening">Pokračovať v počúvaní</string>
     <string name="library.empty.add_first_book">Pridajte si priečinok so zvukovými knihami, aby ste mohli začať počúvať!</string>
+    <string name="library.empty.title">Nenašli sa žiadne zvukové knihy</string>
+    <string name="library.empty.message">Voice vo vašich priečinkoch nemôže nájsť žiadne zvukové knihy. Skontrolujte, či sú súbory stále na svojom mieste, alebo pridajte priečinok.</string>
+    <string name="library.empty.action">Zobraziť priečinky</string>
     <string name="library.folders.title">Priečinok so zvukovými knihami</string>
     <string name="library.folders.moved.dialog.title">Priečinky audiokníh presunuté</string>
     <string name="library.folders.moved.dialog.message">Priečinky audiokníh teraz môžete spravovať v nastaveniach.</string>
+    <string name="library.folders.no_access">Bez prístupu</string>
+    <string name="library.folders.no_access.action">Povoliť prístup</string>
+    <string name="library.folders.no_access.badge">Znova povoľte prístup k svojim priečinkom</string>
     <string name="library.greeting.afternoon">Dobré popoludnie</string>
     <string name="library.greeting.evening">Dobrý večer</string>
     <string name="library.greeting.morning">Dobré ráno</string>
@@ -368,6 +384,8 @@
     <string name="settings.appearance.color_scheme.dynamic">Dynamická farba</string>
     <string name="settings.appearance.color_scheme.dynamic.summary">Používa farby z tapety a systémovej témy.</string>
     <string name="settings.appearance.color_scheme.voice_blue">Modrá Voice</string>
+    <string name="settings.appearance.pure_black.summary">Šetrí batériu na OLED displejoch v tmavej téme.</string>
+    <string name="settings.appearance.pure_black.title">Čisto čierna</string>
     <string name="settings.appearance.theme.dark">Tmavé</string>
     <string name="settings.appearance.theme.follow_system">Podľa systému</string>
     <string name="settings.appearance.theme.light">Svetlé</string>
@@ -412,8 +430,7 @@
     <string name="support.badges.title">Váš odznak rastie s každým mesiacom podpory</string>
     <string name="support.action.donate_kofi">Prispieť na Ko-fi</string>
     <string name="support.description.maintenance">Voice je zadarmo, open source a udržiava ho jeden vývojár.</string>
-    <string name="support.description.maintenance_subtitle">Dary pomáhajú financovať priebežnú údržbu a vývoj.</string>
-    <string name="support.description.play">Mesačná podpora mi umožňuje plánovať ďalšiu verziu, nielen ďalšiu opravu.</string>
+    <string name="support.description.monthly">Mesačná podpora mi umožňuje plánovať ďalšiu verziu, nielen ďalšiu opravu.</string>
     <string name="support.fine_print">Je to poďakovanie: nič neodomyká. Zrušiť môžete kedykoľvek v Google Play.</string>
     <string name="support.fine_print.tip">Je to poďakovanie: nič neodomyká. Žiadne predplatné.</string>
     <string name="support.helps.title">Podpora pomáha s</string>
@@ -421,7 +438,7 @@
     <string name="support.helps.features">Novými funkciami</string>
     <string name="support.helps.open_source">Udržať Voice bez reklám</string>
     <string name="support.hero.title">Nech Voice nezmĺkne</string>
-    <string name="support.kofi.hint">Ko-fi sa otvorí v prehliadači. Pomôže akákoľvek suma.</string>
+    <string name="support.kofi.hint">Ko-fi sa otvorí v prehliadači. Mesačne alebo jednorazovo, bez účtu.</string>
     <string name="support.message.failed">Nepodarilo sa. Skúste to o chvíľu znova.</string>
     <string name="support.message.pending">Váš čaj sa lúhuje. Odznak sa zobrazí, keď Google potvrdí platbu.</string>
     <string name="support.period.monthly">Mesačne</string>

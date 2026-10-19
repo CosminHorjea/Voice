@@ -13,11 +13,9 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
-import org.junit.BeforeClass
 import voice.core.common.DispatcherProvider
+import voice.core.data.ListeningEvent
 import voice.core.data.sleeptimer.SleepTimerPreference
-import voice.core.logging.api.LogWriter
-import voice.core.logging.api.Logger
 import voice.core.playback.PlayerController
 import voice.core.playback.playstate.PlayStateManager
 import voice.core.sleeptimer.ShakeDetector
@@ -112,6 +110,17 @@ class SleepTimerImplTest {
   }
 
   @Test
+  fun `turning the timer on goes into the history`() = testScope.runTest {
+    sleepTimer.enable(SleepTimerMode.EndOfChapter)
+    sleepTimer.enable(SleepTimerMode.TimedWithDefault)
+
+    verify {
+      playerController.record(ListeningEvent.Type.SleepTimerStarted, ListeningEvent.Source.App)
+      playerController.record(ListeningEvent.Type.SleepTimerStarted, ListeningEvent.Source.SleepTimer)
+    }
+  }
+
+  @Test
   fun `disable cancels timer and resets state`() = testScope.runTest {
     sleepTimer.enable(SleepTimerMode.TimedWithDuration(5.seconds))
     advanceTimeBy(1.seconds)
@@ -166,32 +175,5 @@ class SleepTimerImplTest {
 
     coVerify(exactly = 2) { playerController.pauseWithRewind(any()) }
     assertEquals(expected = SleepTimerState.Disabled, actual = sleepTimer.state.value)
-  }
-
-  companion object {
-
-    @BeforeClass
-    @JvmStatic
-    fun setup() {
-      Logger.install(
-        object : LogWriter {
-          override fun log(
-            severity: Logger.Severity,
-            message: String,
-            throwable: Throwable?,
-          ) {
-            println(
-              buildString {
-                append("${severity.name}: ")
-                append(message)
-                if (throwable != null) {
-                  append(", $throwable")
-                }
-              },
-            )
-          }
-        },
-      )
-    }
   }
 }

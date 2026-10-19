@@ -28,6 +28,7 @@ import voice.core.data.store.AutoRewindAmountStore
 import voice.core.data.store.DeveloperMenuUnlockedStore
 import voice.core.data.store.GridModeStore
 import voice.core.data.store.LockScreenSliderStore
+import voice.core.data.store.PureBlackStore
 import voice.core.data.store.SeekTimeStore
 import voice.core.data.store.SleepTimerPreferenceStore
 import voice.core.data.store.SupporterStatusStore
@@ -55,6 +56,8 @@ class SettingsViewModel(
   private val themeModeStore: DataStore<ThemeMode>,
   @ThemeColorSchemeStore
   private val themeColorSchemeStore: DataStore<ThemeColorScheme>,
+  @PureBlackStore
+  private val pureBlackStore: DataStore<Boolean>,
   @AutoRewindAmountStore
   private val autoRewindAmountStore: DataStore<Int>,
   @SeekTimeStore
@@ -100,6 +103,7 @@ class SettingsViewModel(
   fun viewState(): SettingsViewState? {
     val themeMode = remember { themeModeStore.data }.collectAsState(initial = null).value
     val themeColorScheme = remember { themeColorSchemeStore.data }.collectAsState(initial = null).value
+    val pureBlack = remember { pureBlackStore.data }.collectAsState(initial = null).value
     val autoRewindAmount = remember { autoRewindAmountStore.data }.collectAsState(initial = null).value
     val seekTime = remember { seekTimeStore.data }.collectAsState(initial = null).value
     val lockScreenSlider = remember { lockScreenSliderStore.data }.collectAsState(initial = null).value
@@ -108,6 +112,7 @@ class SettingsViewModel(
     val analyticsEnabled = remember { analyticsConsentStore.data }.collectAsState(initial = null).value
     // reading the folders and their names asks other processes, so that's kept off the main thread
     val folderNames = remember { folderNames() }.collectAsState(initial = null, context = dispatcherProvider.io).value
+    val foldersWithoutAccess = remember { foldersWithoutAccess() }.collectAsState(initial = null, context = dispatcherProvider.io).value
     val showDeveloperMenu = remember { developerMenuUnlockedStore.data }.collectAsState(initial = null).value
     val showSupportDevelopment = remember { supportDevelopmentFeatureFlag.flow.map { it.value } }.collectAsState(initial = null).value
     val supporterStatus = remember { supporterStatusStore.data }.collectAsState(initial = null).value
@@ -122,6 +127,7 @@ class SettingsViewModel(
     if (
       themeMode == null ||
       themeColorScheme == null ||
+      pureBlack == null ||
       autoRewindAmount == null ||
       seekTime == null ||
       lockScreenSlider == null ||
@@ -129,6 +135,7 @@ class SettingsViewModel(
       autoSleepTimer == null ||
       analyticsEnabled == null ||
       folderNames == null ||
+      foldersWithoutAccess == null ||
       showDeveloperMenu == null ||
       showSupportDevelopment == null ||
       supporterStatus == null ||
@@ -140,6 +147,7 @@ class SettingsViewModel(
     return SettingsViewState(
       themeMode = themeMode,
       themeColorScheme = themeColorScheme,
+      pureBlack = pureBlack,
       dynamicColorAvailable = dynamicColorAvailable,
       seekTimeInSeconds = seekTime,
       autoRewindInSeconds = autoRewindAmount,
@@ -164,6 +172,7 @@ class SettingsViewModel(
         YearMonth.from(Instant.ofEpochMilli(it).atZone(clock.zone))
       },
       folderNames = folderNames,
+      foldersWithoutAccess = foldersWithoutAccess,
       audiobookshelfServer = audiobookshelfServer.name,
       // a connected server stays reachable, so it can be signed out of
       showAudiobookshelf = audiobookshelfEnabled || audiobookshelfServer.name != null,
@@ -184,6 +193,13 @@ class SettingsViewModel(
     }
   }
 
+  private fun foldersWithoutAccess(): Flow<Boolean> {
+    if (kioskModeFeatureFlag.get()) {
+      return flowOf(false)
+    }
+    return audiobookFolders.withoutAccess().map { folders -> folders.values.any { it.isNotEmpty() } }
+  }
+
   override fun close() {
     navigator.goBack()
   }
@@ -197,6 +213,12 @@ class SettingsViewModel(
   override fun setThemeColorScheme(themeColorScheme: ThemeColorScheme) {
     mainScope.launch {
       themeColorSchemeStore.updateData { themeColorScheme }
+    }
+  }
+
+  override fun togglePureBlack() {
+    mainScope.launch {
+      pureBlackStore.updateData { !it }
     }
   }
 

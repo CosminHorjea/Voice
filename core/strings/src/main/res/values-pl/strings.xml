@@ -69,7 +69,7 @@
     <string name="book.category.action.mark_not_started">Oznacz jako nierozpoczęta</string>
     <string name="book.delete.bottom_sheet.title">Usuń książkę</string>
     <string name="book.delete.dialog.confirm_files">Usuń moje pliki</string>
-    <string name="book.delete.dialog.message">Ta akcja usunie pliki z twojego urządzenia.</string>
+    <string name="book.delete.dialog.message">Pliki zostaną trwale usunięte z twojego urządzenia. Nie da się ich odzyskać.</string>
     <string name="book.delete.dialog.title">Usuń książkę</string>
     <string name="book.download.action">Pobierz</string>
     <string name="book.download.failed">Nie udało się dokończyć pobierania</string>
@@ -209,19 +209,31 @@
         <item quantity="many">%d plików audio</item>
         <item quantity="other">%d plików audio</item>
     </plurals>
-    <string name="history.action.continue_from">Kontynuuj od %1$s</string>
-    <string name="history.action.continue_from.chapter">Kontynuuj od rozdz. %1$d · %2$s</string>
     <string name="history.empty.message">Odtworzenia, pauzy i skoki są tu widoczne, więc zawsze odnajdziesz drogę powrotną.</string>
     <string name="history.empty.title">Na razie nic tu nie ma</string>
     <string name="history.event.bookmark_jump">Przejście do zakładki</string>
     <string name="history.event.chapter_change">Zmiana rozdziału</string>
-    <string name="history.event.dozed_off">Zaśnięcie · czas minął</string>
+    <string name="history.event.interrupted">Przerwa na %s</string>
     <string name="history.event.jump_back">Powrót do poprzedniego miejsca</string>
     <string name="history.event.moved">Przesunięcie</string>
+    <string name="history.event.paused">Pauza</string>
     <string name="history.event.played">Odtwarzanie</string>
-    <string name="history.event.sleep_timer_set">Wyłącznik czasowy</string>
+    <plurals name="history.event.rewound">
+        <item quantity="one">Cofnięto %d raz</item>
+        <item quantity="few">Cofnięto %d razy</item>
+        <item quantity="many">Cofnięto %d razy</item>
+        <item quantity="other">Cofnięto %d razy</item>
+    </plurals>
+    <string name="history.event.shook">Potrząśnięto, by słuchać dalej</string>
+    <plurals name="history.event.skipped_ahead">
+        <item quantity="one">Przewinięto do przodu %d raz</item>
+        <item quantity="few">Przewinięto do przodu %d razy</item>
+        <item quantity="many">Przewinięto do przodu %d razy</item>
+        <item quantity="other">Przewinięto do przodu %d razy</item>
+    </plurals>
+    <string name="history.event.sleep_timer_ended">Wyłącznik czasowy zadziałał</string>
+    <string name="history.event.sleep_timer_on">Wyłącznik czasowy włączony</string>
     <string name="history.location.chapter">Rozdz. %1$d · %2$s</string>
-    <string name="history.source.app">W aplikacji</string>
     <string name="history.source.audio_focus">Przerwane</string>
     <string name="history.source.bluetooth">Urządzenie Bluetooth</string>
     <string name="history.source.car">Samochód</string>
@@ -229,8 +241,6 @@
     <string name="history.source.notification">Powiadomienie</string>
     <string name="history.source.other_app">Inna aplikacja</string>
     <string name="history.source.other_device">Inne urządzenie</string>
-    <string name="history.source.sleep_timer">Wyłącznik czasowy</string>
-    <string name="history.source.unknown">Nieznane</string>
     <string name="history.source.unplugged">Odłączono audio</string>
     <string name="history.source.watch">Zegarek</string>
     <string name="history.source.widget">Widżet</string>
@@ -241,9 +251,15 @@
     <string name="library.category.not_started.title">Nierozpoczęte</string>
     <string name="library.continue_listening">Słuchaj dalej</string>
     <string name="library.empty.add_first_book">Dodajmy twój folder z audiobookami aby rozpocząć słuchanie!</string>
+    <string name="library.empty.title">Nie znaleziono audiobooków</string>
+    <string name="library.empty.message">Voice nie może znaleźć żadnych audiobooków w twoich folderach. Sprawdź, czy pliki nadal tam są, albo dodaj folder.</string>
+    <string name="library.empty.action">Pokaż foldery</string>
     <string name="library.folders.title">Foldery audiobooków</string>
     <string name="library.folders.moved.dialog.title">Foldery audiobooków przeniesione</string>
     <string name="library.folders.moved.dialog.message">Folderami audiobooków możesz teraz zarządzać w Ustawieniach.</string>
+    <string name="library.folders.no_access">Brak dostępu</string>
+    <string name="library.folders.no_access.action">Zezwól na dostęp</string>
+    <string name="library.folders.no_access.badge">Ponownie zezwól na dostęp do swoich folderów</string>
     <string name="library.greeting.afternoon">Dzień dobry</string>
     <string name="library.greeting.evening">Dobry wieczór</string>
     <string name="library.greeting.morning">Dzień dobry</string>
@@ -368,6 +384,8 @@
     <string name="settings.appearance.color_scheme.dynamic">Kolor dynamiczny</string>
     <string name="settings.appearance.color_scheme.dynamic.summary">Używa kolorów z tapety i motywu systemowego.</string>
     <string name="settings.appearance.color_scheme.voice_blue">Niebieski Voice</string>
+    <string name="settings.appearance.pure_black.summary">Oszczędza baterię na ekranach OLED w ciemnym motywie.</string>
+    <string name="settings.appearance.pure_black.title">Czysta czerń</string>
     <string name="settings.appearance.theme.dark">Ciemny</string>
     <string name="settings.appearance.theme.follow_system">Zgodnie z systemem</string>
     <string name="settings.appearance.theme.light">Jasny</string>
@@ -412,8 +430,7 @@
     <string name="support.badges.title">Twoja odznaka rośnie z każdym miesiącem wsparcia</string>
     <string name="support.action.donate_kofi">Przekaż darowiznę na Ko-fi</string>
     <string name="support.description.maintenance">Voice jest darmowy, open source i utrzymywany przez jednego programistę.</string>
-    <string name="support.description.maintenance_subtitle">Darowizny pomagają finansować bieżące utrzymanie i rozwój.</string>
-    <string name="support.description.play">Comiesięczne wsparcie pozwala mi planować kolejne wydanie, a nie tylko kolejną poprawkę.</string>
+    <string name="support.description.monthly">Comiesięczne wsparcie pozwala mi planować kolejne wydanie, a nie tylko kolejną poprawkę.</string>
     <string name="support.fine_print">To podziękowanie: nic nie odblokowuje. Anuluj w każdej chwili w Google Play.</string>
     <string name="support.fine_print.tip">To podziękowanie: nic nie odblokowuje. Bez subskrypcji.</string>
     <string name="support.helps.title">Wsparcie pomaga w</string>
@@ -421,7 +438,7 @@
     <string name="support.helps.features">Nowych funkcjach</string>
     <string name="support.helps.open_source">Utrzymaniu Voice bez reklam</string>
     <string name="support.hero.title">Niech Voice nie milknie</string>
-    <string name="support.kofi.hint">Ko-fi otworzy się w przeglądarce. Każda kwota pomaga.</string>
+    <string name="support.kofi.hint">Ko-fi otworzy się w przeglądarce. Co miesiąc lub jednorazowo, bez zakładania konta.</string>
     <string name="support.message.failed">Nie udało się. Spróbuj ponownie za chwilę.</string>
     <string name="support.message.pending">Twoja herbata się parzy. Odznaka pojawi się, gdy Google potwierdzi płatność.</string>
     <string name="support.period.monthly">Miesięcznie</string>

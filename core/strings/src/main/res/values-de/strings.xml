@@ -63,7 +63,7 @@
     <string name="book.category.action.mark_not_started">Als „Neu“ markieren</string>
     <string name="book.delete.bottom_sheet.title">Buch löschen</string>
     <string name="book.delete.dialog.confirm_files">Lösche meine Dateien</string>
-    <string name="book.delete.dialog.message">Dies wird die Dateien auf Deinem Gerät löschen.</string>
+    <string name="book.delete.dialog.message">Die Dateien werden endgültig von Deinem Gerät gelöscht. Du kannst sie nicht wiederherstellen.</string>
     <string name="book.delete.dialog.title">Buch löschen</string>
     <string name="book.download.action">Herunterladen</string>
     <string name="book.download.failed">Der Download hat nicht geklappt</string>
@@ -187,19 +187,27 @@
         <item quantity="one">%d Audiodatei</item>
         <item quantity="other">%d Audiodateien</item>
     </plurals>
-    <string name="history.action.continue_from">Weiter ab %1$s</string>
-    <string name="history.action.continue_from.chapter">Weiter ab Kap. %1$d · %2$s</string>
     <string name="history.empty.message">Wiedergaben, Pausen und Sprünge erscheinen hier, damit Du immer zurückfindest.</string>
     <string name="history.empty.title">Noch nichts da</string>
     <string name="history.event.bookmark_jump">Zu Lesezeichen gesprungen</string>
     <string name="history.event.chapter_change">Kapitel gewechselt</string>
-    <string name="history.event.dozed_off">Eingeschlafen · Timer abgelaufen</string>
+    <string name="history.event.interrupted">%s unterbrochen</string>
     <string name="history.event.jump_back">Zurückgesprungen</string>
     <string name="history.event.moved">Gespult</string>
+    <string name="history.event.paused">Pausiert</string>
     <string name="history.event.played">Gestartet</string>
-    <string name="history.event.sleep_timer_set">Einschlaf-Timer</string>
+    <plurals name="history.event.rewound">
+        <item quantity="one">%d-mal zurückgespult</item>
+        <item quantity="other">%d-mal zurückgespult</item>
+    </plurals>
+    <string name="history.event.shook">Geschüttelt, um weiterzuhören</string>
+    <plurals name="history.event.skipped_ahead">
+        <item quantity="one">%d-mal vorgespult</item>
+        <item quantity="other">%d-mal vorgespult</item>
+    </plurals>
+    <string name="history.event.sleep_timer_ended">Einschlaf-Timer abgelaufen</string>
+    <string name="history.event.sleep_timer_on">Einschlaf-Timer gestellt</string>
     <string name="history.location.chapter">Kap. %1$d · %2$s</string>
-    <string name="history.source.app">In der App</string>
     <string name="history.source.audio_focus">Unterbrochen</string>
     <string name="history.source.bluetooth">Bluetooth-Gerät</string>
     <string name="history.source.car">Auto</string>
@@ -207,8 +215,6 @@
     <string name="history.source.notification">Benachrichtigung</string>
     <string name="history.source.other_app">Andere App</string>
     <string name="history.source.other_device">Anderes Gerät</string>
-    <string name="history.source.sleep_timer">Einschlaf-Timer</string>
-    <string name="history.source.unknown">Unbekannt</string>
     <string name="history.source.unplugged">Audio getrennt</string>
     <string name="history.source.watch">Smartwatch</string>
     <string name="history.source.widget">Widget</string>
@@ -219,9 +225,15 @@
     <string name="library.category.not_started.title">Neu</string>
     <string name="library.continue_listening">Weiterhören</string>
     <string name="library.empty.add_first_book">Füge Deinen Hörbuchordner hinzu, damit Du mit dem Hören beginnen kannst!</string>
+    <string name="library.empty.title">Keine Hörbücher gefunden</string>
+    <string name="library.empty.message">Voice findet in Deinen Ordnern keine Hörbücher. Prüfe, ob die Dateien noch da sind, oder füge einen Ordner hinzu.</string>
+    <string name="library.empty.action">Ordner anzeigen</string>
     <string name="library.folders.title">Hörbuch-Ordner</string>
     <string name="library.folders.moved.dialog.title">Hörbuch-Ordner verschoben</string>
     <string name="library.folders.moved.dialog.message">Du kannst Hörbuch-Ordner jetzt in den Einstellungen verwalten.</string>
+    <string name="library.folders.no_access">Kein Zugriff</string>
+    <string name="library.folders.no_access.action">Zugriff erlauben</string>
+    <string name="library.folders.no_access.badge">Zugriff auf Deine Ordner wieder erlauben</string>
     <string name="library.greeting.afternoon">Guten Tag</string>
     <string name="library.greeting.evening">Guten Abend</string>
     <string name="library.greeting.morning">Guten Morgen</string>
@@ -336,8 +348,10 @@
     <string name="settings.appearance.color_scheme.dynamic">Dynamische Farben</string>
     <string name="settings.appearance.color_scheme.dynamic.summary">Verwendet Farben aus Deinem Hintergrundbild und Systemdesign.</string>
     <string name="settings.appearance.color_scheme.voice_blue">Voice-Blau</string>
+    <string name="settings.appearance.pure_black.summary">Spart Akku bei OLED-Displays im dunklen Design.</string>
+    <string name="settings.appearance.pure_black.title">Reines Schwarz</string>
     <string name="settings.appearance.theme.dark">Dunkel</string>
-    <string name="settings.appearance.theme.follow_system">Systemeinstellung</string>
+    <string name="settings.appearance.theme.follow_system">Wie System</string>
     <string name="settings.appearance.theme.light">Hell</string>
     <string name="settings.appearance.theme.title">Design</string>
     <string name="settings.appearance.title">Erscheinungsbild</string>
@@ -380,8 +394,7 @@
     <string name="support.badges.title">Dein Abzeichen wächst jeden Monat, den Du unterstützt</string>
     <string name="support.action.donate_kofi">Auf Ko-fi spenden</string>
     <string name="support.description.maintenance">Voice ist kostenlos, quelloffen und wird von einem Entwickler betreut.</string>
-    <string name="support.description.maintenance_subtitle">Spenden helfen, laufende Wartung und Entwicklung zu finanzieren.</string>
-    <string name="support.description.play">Mit monatlicher Unterstützung kann ich die nächste Version planen, nicht nur den nächsten Bugfix.</string>
+    <string name="support.description.monthly">Mit monatlicher Unterstützung kann ich die nächste Version planen, nicht nur den nächsten Bugfix.</string>
     <string name="support.fine_print">Ein Dankeschön: schaltet nichts frei. Jederzeit in Google Play kündbar.</string>
     <string name="support.fine_print.tip">Ein Dankeschön: schaltet nichts frei. Kein Abo.</string>
     <string name="support.helps.title">Unterstützung hilft bei</string>
@@ -389,7 +402,7 @@
     <string name="support.helps.features">Neuen Funktionen</string>
     <string name="support.helps.open_source">Voice werbefrei halten</string>
     <string name="support.hero.title">Damit Voice nicht verstummt</string>
-    <string name="support.kofi.hint">Ko-fi öffnet sich in Deinem Browser. Jeder Betrag hilft.</string>
+    <string name="support.kofi.hint">Ko-fi öffnet sich in Deinem Browser. Monatlich oder einmalig, ohne Konto.</string>
     <string name="support.message.failed">Das hat nicht geklappt. Versuche es gleich noch einmal.</string>
     <string name="support.message.pending">Dein Tee zieht noch. Dein Abzeichen erscheint, sobald Google die Zahlung bestätigt.</string>
     <string name="support.period.monthly">Monatlich</string>
