@@ -10,4 +10,6 @@ interface AppInfoProvider {
   val supportDevelopmentIncluded: Boolean
 
   val installTime: Instant
+
+  val installer: String?
 }

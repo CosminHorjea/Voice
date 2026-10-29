@@ -1,5 +1,8 @@
 #!/usr/bin/env kotlin
+@file:DependsOn("org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.12.0")
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 
@@ -112,6 +115,71 @@ if (missing.isNotEmpty() || unexpected.isNotEmpty()) {
   throw IllegalStateException("Update $localeConfigFile to match localization coverage.")
 }
 
+fun storeListingMatches(listing: String, locale: String): Boolean {
+  val listingParts = listing.split("-")
+  val listingLanguage = when (listingParts[0]) {
+    "iw" -> "he"
+    "no" -> "nb"
+    else -> listingParts[0]
+  }
+  val localeParts = locale.split("-")
+  val localeRegion = localeParts.getOrNull(1)
+  return listingLanguage == localeParts[0] && (localeRegion == null || localeRegion == listingParts.getOrNull(1))
+}
+
+val storeListingDir = File(repoRoot, "fastlane/metadata/android")
+
+// Google Play has no Sardinian store listing language.
+val localesWithoutStoreListing = setOf("sc")
+val storeListingLimits = mapOf(
+  "title.txt" to 30,
+  "short_description.txt" to 80,
+  "full_description.txt" to 4000,
+)
+val storeListings = storeListingDir.listFiles()
+  .orEmpty()
+  .filter { it.isDirectory }
+  .map { it.name }
+  .sorted()
+val playProductsPath = "fastlane/play_products.json"
+val playProductListings = Json.parseToJsonElement(File(repoRoot, playProductsPath).readText())
+  .jsonObject
+  .getValue("listings")
+  .jsonObject
+  .keys
+val storeListingProblems = buildList {
+  (actualLocales - localesWithoutStoreListing).sorted().forEach { locale ->
+    if (storeListings.none { storeListingMatches(it, locale) }) {
+      add("$locale has no store listing")
+    }
+  }
+  storeListings.forEach { listing ->
+    if (actualLocales.none { storeListingMatches(listing, it) }) {
+      add("$listing is not in the locale config")
+    }
+    storeListingLimits.forEach { (fileName, limit) ->
+      val file = File(storeListingDir, "$listing/$fileName")
+      val length = if (file.exists()) file.readText().trim().length else 0
+      if (length == 0 || length > limit) {
+        add("$listing/$fileName has $length characters, needs 1 to $limit")
+      }
+    }
+    if (listing !in playProductListings) {
+      add("$listing has no listings in $playProductsPath")
+    }
+  }
+  (playProductListings - storeListings.toSet()).sorted().forEach { language ->
+    add("$language in $playProductsPath has no store listing")
+  }
+}
+
+if (storeListingProblems.isNotEmpty()) {
+  println("Play Store listings do not match the locale config:")
+  storeListingProblems.forEach { println("- $it") }
+  throw IllegalStateException("Add a store listing and Play product listings for every locale in $localeConfigFile.")
+}
+
+println("Every locale has a store listing and Play product listings.")
 println("Locale config matches localization coverage.")
 localizedCoverages.sortedByDescending { it.percentage }.forEach {
   val status = if (it.percentage >= minCoverage) "included" else "excluded"

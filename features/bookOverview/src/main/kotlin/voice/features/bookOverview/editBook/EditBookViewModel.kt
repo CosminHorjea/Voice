@@ -1,0 +1,73 @@
+package voice.features.bookOverview.editBook
+
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
+import dev.zacsweers.metro.ContributesIntoSet
+import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
+import voice.core.data.BookId
+import voice.core.data.isRemote
+import voice.core.data.repo.BookRepository
+import voice.features.bookOverview.bottomSheet.BottomSheetItem
+import voice.features.bookOverview.bottomSheet.BottomSheetItemViewModel
+import voice.features.bookOverview.di.BookActionsScope
+
+@SingleIn(BookActionsScope::class)
+@ContributesIntoSet(BookActionsScope::class)
+class EditBookViewModel(private val repo: BookRepository) : BottomSheetItemViewModel {
+
+  private val scope = MainScope()
+
+  private val _state = mutableStateOf<EditBookState?>(null)
+  internal val state: State<EditBookState?> get() = _state
+
+  override suspend fun items(bookId: BookId): List<BottomSheetItem> {
+    // server books take their names from the server
+    if (bookId.isRemote) return emptyList()
+    return listOf(BottomSheetItem.Edit)
+  }
+
+  override suspend fun onItemClick(
+    bookId: BookId,
+    item: BottomSheetItem,
+  ) {
+    if (item != BottomSheetItem.Edit) return
+    val book = repo.get(bookId) ?: return
+    _state.value = EditBookState(
+      title = book.name,
+      author = book.author.orEmpty(),
+      bookId = bookId,
+      cover = book.coverUrl,
+    )
+  }
+
+  internal fun onDismiss() {
+    _state.value = null
+  }
+
+  internal fun onTitleChange(title: String) {
+    _state.value = _state.value?.copy(title = title)
+  }
+
+  internal fun onAuthorChange(author: String) {
+    _state.value = _state.value?.copy(author = author)
+  }
+
+  internal fun onConfirm() {
+    val state = _state.value
+    if (state != null) {
+      check(state.confirmButtonEnabled)
+      scope.launch {
+        // only what the listener changed, so the other name keeps following the files
+        repo.updateCustomMetadata(state.bookId) { custom ->
+          var edited = custom
+          if (state.title != state.initialTitle) edited = edited.copy(name = state.title.trim())
+          if (state.author != state.initialAuthor) edited = edited.copy(author = state.author.trim().ifEmpty { null })
+          edited
+        }
+      }
+    }
+    _state.value = null
+  }
+}

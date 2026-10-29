@@ -11,7 +11,6 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.datastore.core.DataStore
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
@@ -28,15 +27,14 @@ import voice.core.common.DispatcherProvider
 import voice.core.common.MainScope
 import voice.core.common.comparator.NaturalOrderComparator
 import voice.core.data.Book
-import voice.core.data.BookContent
 import voice.core.data.BookId
-import voice.core.data.KioskModeDemoData
 import voice.core.data.repo.BookRepository
 import voice.core.data.repo.RecentBookSearchRepo
 import voice.core.data.store.CurrentBookStore
-import voice.core.featureflag.ExperimentalPlaybackPersistenceQualifier
 import voice.core.featureflag.FeatureFlag
-import voice.core.featureflag.KioskModeFeatureFlagQualifier
+import voice.core.kioskmode.KioskModeDemoData
+import voice.core.kioskmode.KioskModeFeatureFlag
+import voice.core.playback.ExperimentalPlaybackPersistenceFeatureFlag
 import voice.core.playback.LivePlaybackState
 import voice.core.playback.PlayerController
 import voice.core.playback.overlay
@@ -62,12 +60,9 @@ class BookSearchViewModel(
   private val navigator: Navigator,
   private val playerController: PlayerController,
   private val playStateManager: PlayStateManager,
-  @CurrentBookStore
-  private val currentBookStore: DataStore<BookId?>,
-  @KioskModeFeatureFlagQualifier
-  private val kioskModeFeatureFlag: FeatureFlag<Boolean>,
-  @ExperimentalPlaybackPersistenceQualifier
-  private val experimentalPlaybackPersistenceFeatureFlag: FeatureFlag<Boolean>,
+  private val currentBookStore: CurrentBookStore,
+  private val kioskModeFeatureFlag: KioskModeFeatureFlag,
+  private val experimentalPlaybackPersistenceFeatureFlag: ExperimentalPlaybackPersistenceFeatureFlag,
   private val lastResults: LastBookSearchResults,
   dispatcherProvider: DispatcherProvider,
 ) {
@@ -188,12 +183,12 @@ class BookSearchViewModel(
 
   private fun browse(books: List<Book>): BookSearchViewState.Browse? {
     val categories = BrowseCategory.entries.filter { category ->
-      books.any { category.value(it.content) != null }
+      books.any { category.value(it) != null }
     }
     if (categories.isEmpty()) return null
     val selected = selectedBrowseCategory?.takeIf { it in categories } ?: categories.first()
     val entries = books
-      .mapNotNull { book -> selected.value(book.content)?.let { it to book } }
+      .mapNotNull { book -> selected.value(book)?.let { it to book } }
       .groupBy({ (value, _) -> value.lowercase() }, { (value, book) -> value to book })
       .map { (_, values) ->
         val name = values.groupingBy { (value, _) -> value }.eachCount().maxBy { it.value }.key
@@ -331,12 +326,12 @@ class LastBookSearchResults {
   internal var value: QueryResults? = null
 }
 
-private fun BrowseCategory.value(content: BookContent): String? {
+private fun BrowseCategory.value(book: Book): String? {
   val value = when (this) {
-    BrowseCategory.Authors -> content.metadata.author
-    BrowseCategory.Series -> content.metadata.series
-    BrowseCategory.Narrators -> content.metadata.narrator
-    BrowseCategory.Genres -> content.metadata.genre
+    BrowseCategory.Authors -> book.author
+    BrowseCategory.Series -> book.content.metadata.series
+    BrowseCategory.Narrators -> book.content.metadata.narrator
+    BrowseCategory.Genres -> book.content.metadata.genre
   }
   return value?.trim()?.takeIf { it.isNotEmpty() }
 }
@@ -346,7 +341,6 @@ private val TagFields = listOf(BookSearchField.Series, BookSearchField.Narrator,
 private fun BookSearchResult.toViewState(livePlaybackState: LivePlaybackState?): SearchResultViewState {
   val book = livePlaybackState?.let(book::overlay) ?: book
   val item = book.toItemViewState()
-  val content = book.content
   return SearchResultViewState(
     id = book.id,
     title = HighlightedText(item.name, matches[BookSearchField.Title].orEmpty()),
@@ -357,7 +351,7 @@ private fun BookSearchResult.toViewState(livePlaybackState: LivePlaybackState?):
     remainingTime = item.remainingTime,
     matchTag = TagFields.firstNotNullOfOrNull { field ->
       val highlights = matches[field] ?: return@firstNotNullOfOrNull null
-      val text = field.text(content) ?: return@firstNotNullOfOrNull null
+      val text = field.text(book) ?: return@firstNotNullOfOrNull null
       MatchTag(field, HighlightedText(text, highlights))
     },
   )

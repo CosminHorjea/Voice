@@ -12,7 +12,7 @@ dependencies {
   implementation(projects.core.scanner)
   implementation(projects.core.strings)
   implementation(projects.core.ui)
-  implementation(projects.core.featureflag)
+  implementation(projects.core.remoteconfig.api)
 
   implementation(libs.bundles.retrofit)
   implementation(libs.okhttp)
@@ -21,7 +21,4 @@ dependencies {
   implementation(libs.navigation3.ui)
 
   implementation(libs.serialization.json)
-  testImplementation(projects.core.data.impl)
-  testImplementation(projects.core.remoteconfig.noop)
-  testImplementation(projects.core.analytics.noop)
 }

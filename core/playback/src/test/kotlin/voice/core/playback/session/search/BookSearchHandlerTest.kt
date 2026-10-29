@@ -10,7 +10,9 @@ import voice.core.data.BookId
 import voice.core.data.BookMetadata
 import voice.core.data.Chapter
 import voice.core.data.ChapterId
+import voice.core.data.CustomMetadata
 import voice.core.data.repo.BookRepository
+import voice.core.data.store.CurrentBookStore
 import voice.core.playback.MemoryDataStore
 import java.time.Instant
 import kotlin.test.Test
@@ -31,12 +33,12 @@ class BookSearchHandlerTest {
   init {
     coEvery { repo.all() } coAnswers { listOf(anotherBook, bookToFind) }
 
-    searchHandler = BookSearchHandler(repo, currentBookId)
+    searchHandler = BookSearchHandler(repo, CurrentBookStore(currentBookId))
   }
 
   @Test
   fun unstructuredSearchByBook() = runTest {
-    val bookSearch = VoiceSearch(query = bookToFind.content.name)
+    val bookSearch = VoiceSearch(query = bookToFind.name)
     assertEquals(expected = bookToFind, actual = searchHandler.handle(bookSearch))
   }
 
@@ -92,7 +94,7 @@ class BookSearchHandlerTest {
     val bookSearch = VoiceSearch(
       mediaFocus = MediaStore.Audio.Albums.ENTRY_CONTENT_TYPE,
       artist = bookToFind.content.metadata.author,
-      album = bookToFind.content.name,
+      album = bookToFind.name,
       query = null,
     )
     assertEquals(expected = bookToFind, actual = searchHandler.handle(bookSearch))
@@ -128,10 +130,9 @@ fun book(
         cover = null,
         fileLastModified = null,
       ),
-      customName = null,
-      customCover = null,
     ),
     chapters = chapters,
+    custom = CustomMetadata(id),
   )
 }
 

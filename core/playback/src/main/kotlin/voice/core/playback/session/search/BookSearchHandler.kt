@@ -1,7 +1,6 @@
 package voice.core.playback.session.search
 
 import android.provider.MediaStore
-import androidx.datastore.core.DataStore
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.first
 import voice.core.data.Book
@@ -13,8 +12,7 @@ import voice.core.logging.api.Logger
 @Inject
 class BookSearchHandler(
   private val repo: BookRepository,
-  @CurrentBookStore
-  private val currentBookStore: DataStore<BookId?>,
+  private val currentBookStore: CurrentBookStore,
 ) {
 
   suspend fun handle(search: VoiceSearch): Book? {
@@ -31,9 +29,9 @@ class BookSearchHandler(
   private suspend fun searchAlbum(search: VoiceSearch): Book? {
     if (search.album != null) {
       val foundMatch = findBook {
-        val nameMatches = it.content.name.contains(search.album, ignoreCase = true)
+        val nameMatches = it.name.contains(search.album, ignoreCase = true)
         val artistMatches =
-          search.artist == null || it.content.metadata.author?.contains(search.artist, ignoreCase = true) == true
+          search.artist == null || it.author?.contains(search.artist, ignoreCase = true) == true
         nameMatches && artistMatches
       }
       if (foundMatch != null) return foundMatch
@@ -45,8 +43,8 @@ class BookSearchHandler(
   private suspend fun searchUnstructured(query: String?): Book? {
     if (!query.isNullOrBlank()) {
       val foundMatch = findBook {
-        val bookNameMatches = it.content.name.contains(query, ignoreCase = true)
-        val authorMatches = it.content.metadata.author?.contains(query, ignoreCase = true) == true
+        val bookNameMatches = it.name.contains(query, ignoreCase = true)
+        val authorMatches = it.author?.contains(query, ignoreCase = true) == true
         val chapterNameMatches = it.chapters.any { chapter ->
           val chapterName = chapter.name
           chapterName != null && chapterName.contains(query, ignoreCase = true)
@@ -63,7 +61,7 @@ class BookSearchHandler(
   private suspend fun searchByArtist(search: VoiceSearch): Book? {
     if (search.artist != null) {
       val foundMatch = findBook {
-        it.content.metadata.author?.contains(search.artist, ignoreCase = true) == true
+        it.author?.contains(search.artist, ignoreCase = true) == true
       }
       if (foundMatch != null) {
         return foundMatch

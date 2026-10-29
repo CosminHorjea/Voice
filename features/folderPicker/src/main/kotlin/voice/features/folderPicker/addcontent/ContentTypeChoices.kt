@@ -23,6 +23,8 @@ import voice.core.strings.R as StringsR
 @Composable
 internal fun ColumnScope.ContentTypeChoices(
   onAdd: (FileTypeSelection, Uri) -> Unit,
+  onFolderPickerCancel: () -> Unit,
+  onNoPicker: () -> Unit,
   onConnectAudiobookshelf: (() -> Unit)?,
 ) {
   val openDocumentLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -33,6 +35,8 @@ internal fun ColumnScope.ContentTypeChoices(
   val documentTreeLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
     if (uri != null) {
       onAdd(FileTypeSelection.Folder, uri)
+    } else {
+      onFolderPickerCancel()
     }
   }
   OnboardingButton(
@@ -42,6 +46,7 @@ internal fun ColumnScope.ContentTypeChoices(
         documentTreeLauncher.launch(null)
       } catch (e: ActivityNotFoundException) {
         Logger.w(e, "Could not add folder")
+        onNoPicker()
       }
     },
   )
@@ -59,6 +64,7 @@ internal fun ColumnScope.ContentTypeChoices(
         openDocumentLauncher.launch(arrayOf("*/*"))
       } catch (e: ActivityNotFoundException) {
         Logger.w(e, "Could not add file")
+        onNoPicker()
       }
     },
   ) {

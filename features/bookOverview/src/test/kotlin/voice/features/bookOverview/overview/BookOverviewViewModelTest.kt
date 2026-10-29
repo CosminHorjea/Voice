@@ -6,6 +6,7 @@ import app.cash.molecule.RecompositionMode
 import app.cash.molecule.launchMolecule
 import app.cash.turbine.test
 import io.mockk.Runs
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
@@ -22,12 +23,14 @@ import voice.core.common.AppInfoProvider
 import voice.core.common.DispatcherProvider
 import voice.core.data.Book
 import voice.core.data.BookId
-import voice.core.data.GridMode
-import voice.core.data.KioskModeDemoData
 import voice.core.data.folders.AudiobookFolders
 import voice.core.data.folders.FolderType
 import voice.core.data.repo.BookRepository
+import voice.core.data.store.CurrentBookStore
 import voice.core.featureflag.MemoryFeatureFlag
+import voice.core.kioskmode.KioskModeDemoData
+import voice.core.kioskmode.KioskModeFeatureFlag
+import voice.core.playback.ExperimentalPlaybackPersistenceFeatureFlag
 import voice.core.playback.LivePlaybackState
 import voice.core.playback.PlayerController
 import voice.core.playback.overlay
@@ -35,10 +38,17 @@ import voice.core.playback.playstate.PlayStateManager
 import voice.core.scanner.DeviceHasStoragePermissionBug
 import voice.core.scanner.MediaScanTrigger
 import voice.core.ui.GridCount
+import voice.core.ui.GridMode
+import voice.core.ui.GridModeStore
 import voice.features.bookOverview.MemoryDataStore
 import voice.features.bookOverview.book
+import voice.features.bookOverview.survey.HandledSurveysStore
+import voice.features.bookOverview.survey.Survey
+import voice.features.bookOverview.survey.SurveyUrlFeatureFlag
 import voice.navigation.Destination
 import voice.navigation.Navigator
+import java.time.Clock
+import java.time.ZoneOffset
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Instant
@@ -74,9 +84,9 @@ class BookOverviewViewModelTest {
       playerController = mockk<PlayerController> {
         every { livePlaybackStateFlow(currentBook.id) } returns livePlaybackFlow
       },
-      currentBookStoreDataStore = MemoryDataStore(currentBook.id),
-      folderPickerMovedDialogShownStore = MemoryDataStore(false),
-      gridModeStore = MemoryDataStore(GridMode.LIST),
+      currentBookStoreDataStore = CurrentBookStore(MemoryDataStore(currentBook.id)),
+      folderPickerMovedDialogShownStore = FolderPickerMovedDialogShownStore(MemoryDataStore(false)),
+      gridModeStore = GridModeStore(MemoryDataStore(GridMode.LIST)),
       gridCount = mockk<GridCount> {
         every { useGridAsDefault() } returns false
       },
@@ -85,13 +95,14 @@ class BookOverviewViewModelTest {
       deviceHasStoragePermissionBug = mockk<DeviceHasStoragePermissionBug> {
         every { hasBug } returns MutableStateFlow(false)
       },
-      folderPickerInSettingsFeatureFlag = MemoryFeatureFlag(false),
-      experimentalPlaybackPersistenceFeatureFlag = MemoryFeatureFlag(true),
-      kioskModeFeatureFlag = MemoryFeatureFlag(false),
+      folderPickerInSettingsFeatureFlag = FolderPickerInSettingsFeatureFlag(MemoryFeatureFlag(false)),
+      experimentalPlaybackPersistenceFeatureFlag = ExperimentalPlaybackPersistenceFeatureFlag(MemoryFeatureFlag(true)),
+      kioskModeFeatureFlag = KioskModeFeatureFlag(MemoryFeatureFlag(false)),
       dispatcherProvider = dispatcherProvider,
       serverLibrary = serverLibrary,
       audiobookFolders = audiobookFolders,
       emptyLibraryTracker = emptyLibraryTracker,
+      survey = survey(),
     )
 
     backgroundScope.launchMolecule(RecompositionMode.Immediate) {
@@ -136,9 +147,9 @@ class BookOverviewViewModelTest {
       },
       playStateManager = PlayStateManager(),
       playerController = mockk(),
-      currentBookStoreDataStore = MemoryDataStore(null),
-      folderPickerMovedDialogShownStore = MemoryDataStore(false),
-      gridModeStore = MemoryDataStore(GridMode.LIST),
+      currentBookStoreDataStore = CurrentBookStore(MemoryDataStore(null)),
+      folderPickerMovedDialogShownStore = FolderPickerMovedDialogShownStore(MemoryDataStore(false)),
+      gridModeStore = GridModeStore(MemoryDataStore(GridMode.LIST)),
       gridCount = mockk<GridCount> {
         every { useGridAsDefault() } returns false
       },
@@ -147,13 +158,14 @@ class BookOverviewViewModelTest {
       deviceHasStoragePermissionBug = mockk<DeviceHasStoragePermissionBug> {
         every { hasBug } returns MutableStateFlow(false)
       },
-      folderPickerInSettingsFeatureFlag = MemoryFeatureFlag(false),
-      experimentalPlaybackPersistenceFeatureFlag = MemoryFeatureFlag(false),
-      kioskModeFeatureFlag = MemoryFeatureFlag(true),
+      folderPickerInSettingsFeatureFlag = FolderPickerInSettingsFeatureFlag(MemoryFeatureFlag(false)),
+      experimentalPlaybackPersistenceFeatureFlag = ExperimentalPlaybackPersistenceFeatureFlag(MemoryFeatureFlag(false)),
+      kioskModeFeatureFlag = KioskModeFeatureFlag(MemoryFeatureFlag(true)),
       dispatcherProvider = dispatcherProvider,
       serverLibrary = serverLibrary,
       audiobookFolders = audiobookFolders,
       emptyLibraryTracker = emptyLibraryTracker,
+      survey = survey(),
     )
 
     backgroundScope.launchMolecule(RecompositionMode.Immediate) {
@@ -355,6 +367,74 @@ class BookOverviewViewModelTest {
   }
 
   @Test
+  fun `a survey shows its card`() = runTest {
+    val viewModel = viewModel(books = listOf(book()), survey = survey(remoteUrl = SURVEY_URL))
+
+    backgroundScope.launchMolecule(RecompositionMode.Immediate) {
+      viewModel.state()
+    }.test {
+      testScheduler.runCurrent()
+      assertEquals(expected = true, actual = expectMostRecentItem().showSurveyCard)
+    }
+  }
+
+  @Test
+  fun `an empty library hides the survey card`() = runTest {
+    val viewModel = viewModel(survey = survey(remoteUrl = SURVEY_URL))
+
+    backgroundScope.launchMolecule(RecompositionMode.Immediate) {
+      viewModel.state()
+    }.test {
+      testScheduler.runCurrent()
+      val state = expectMostRecentItem()
+      assertEquals(expected = true, actual = state.showEmptyLibrary)
+      assertEquals(expected = false, actual = state.showSurveyCard)
+    }
+  }
+
+  @Test
+  fun `taking the survey opens it with the app info and hides the card`() = runTest {
+    val navigator = mockk<Navigator>(relaxed = true)
+    val viewModel = viewModel(books = listOf(book()), navigator = navigator, survey = survey(remoteUrl = SURVEY_URL))
+
+    backgroundScope.launchMolecule(RecompositionMode.Immediate) {
+      viewModel.state()
+    }.test {
+      testScheduler.runCurrent()
+      assertEquals(expected = true, actual = expectMostRecentItem().showSurveyCard)
+
+      viewModel.onSurveyClick()
+      testScheduler.runCurrent()
+
+      assertEquals(expected = false, actual = expectMostRecentItem().showSurveyCard)
+    }
+    verify {
+      navigator.goTo(Destination.Website("$SURVEY_URL?app_version=1.2.3&source=org.fdroid.fdroid&days_installed=14"))
+    }
+  }
+
+  @Test
+  fun `dismissing the survey hides the card`() = runTest {
+    val navigator = mockk<Navigator>(relaxed = true)
+    val viewModel = viewModel(books = listOf(book()), navigator = navigator, survey = survey(remoteUrl = SURVEY_URL))
+
+    backgroundScope.launchMolecule(RecompositionMode.Immediate) {
+      viewModel.state()
+    }.test {
+      testScheduler.runCurrent()
+      assertEquals(expected = true, actual = expectMostRecentItem().showSurveyCard)
+
+      viewModel.onSurveyDismiss()
+      testScheduler.runCurrent()
+
+      assertEquals(expected = false, actual = expectMostRecentItem().showSurveyCard)
+    }
+    verify(exactly = 0) {
+      navigator.goTo(any())
+    }
+  }
+
+  @Test
   fun `show folders opens the folders`() = runTest {
     val navigator = mockk<Navigator>(relaxed = true)
     val viewModel = viewModel(navigator = navigator)
@@ -390,6 +470,7 @@ class BookOverviewViewModelTest {
     books: List<Book> = emptyList(),
     currentBookId: BookId? = null,
     scanning: Flow<Boolean> = MutableStateFlow(false),
+    survey: Survey = survey(),
   ): BookOverviewViewModel {
     return BookOverviewViewModel(
       repo = mockk<BookRepository> {
@@ -401,9 +482,9 @@ class BookOverviewViewModelTest {
       },
       playStateManager = PlayStateManager(),
       playerController = mockk(),
-      currentBookStoreDataStore = MemoryDataStore(currentBookId),
-      folderPickerMovedDialogShownStore = folderPickerMovedDialogShownStore,
-      gridModeStore = MemoryDataStore(GridMode.LIST),
+      currentBookStoreDataStore = CurrentBookStore(MemoryDataStore(currentBookId)),
+      folderPickerMovedDialogShownStore = FolderPickerMovedDialogShownStore(folderPickerMovedDialogShownStore),
+      gridModeStore = GridModeStore(MemoryDataStore(GridMode.LIST)),
       gridCount = mockk<GridCount> {
         every { useGridAsDefault() } returns false
       },
@@ -412,13 +493,31 @@ class BookOverviewViewModelTest {
       deviceHasStoragePermissionBug = mockk<DeviceHasStoragePermissionBug> {
         every { hasBug } returns MutableStateFlow(false)
       },
-      folderPickerInSettingsFeatureFlag = folderPickerInSettingsFeatureFlag,
-      experimentalPlaybackPersistenceFeatureFlag = MemoryFeatureFlag(false),
-      kioskModeFeatureFlag = MemoryFeatureFlag(false),
+      folderPickerInSettingsFeatureFlag = FolderPickerInSettingsFeatureFlag(folderPickerInSettingsFeatureFlag),
+      experimentalPlaybackPersistenceFeatureFlag = ExperimentalPlaybackPersistenceFeatureFlag(MemoryFeatureFlag(false)),
+      kioskModeFeatureFlag = KioskModeFeatureFlag(MemoryFeatureFlag(false)),
       dispatcherProvider = dispatcherProvider,
       serverLibrary = serverLibrary,
       audiobookFolders = audiobookFolders,
       emptyLibraryTracker = emptyLibraryTracker,
+      survey = survey,
+    )
+  }
+
+  private fun survey(remoteUrl: String = ""): Survey {
+    return Survey(
+      surveyUrlFeatureFlag = SurveyUrlFeatureFlag(MemoryFeatureFlag(remoteUrl)),
+      handledSurveysStore = HandledSurveysStore(MemoryDataStore(emptyMap())),
+      localSurvey = mockk {
+        coEvery { url() } returns null
+      },
+      clock = Clock.fixed(java.time.Instant.parse("2026-10-20T10:00:00Z"), ZoneOffset.UTC),
+      appInfoProvider = mockk {
+        every { versionName } returns "1.2.3"
+        every { installer } returns "org.fdroid.fdroid"
+        every { installTime } returns Instant.parse("2026-10-06T10:00:00Z")
+      },
+      analytics = mockk(relaxUnitFun = true),
     )
   }
 
@@ -426,5 +525,9 @@ class BookOverviewViewModelTest {
     return mockk {
       every { this@mockk.installTime } returns installTime
     }
+  }
+
+  private companion object {
+    const val SURVEY_URL = "https://survey.example/s"
   }
 }

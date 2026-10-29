@@ -14,9 +14,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.core.net.toUri
-import androidx.datastore.core.DataStore
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import voice.core.audiobookshelf.ServerLibrary
@@ -25,17 +25,13 @@ import voice.core.common.DispatcherProvider
 import voice.core.common.MainScope
 import voice.core.data.Book
 import voice.core.data.BookId
-import voice.core.data.GridMode
-import voice.core.data.KioskModeDemoData
 import voice.core.data.folders.AudiobookFolders
 import voice.core.data.repo.BookRepository
 import voice.core.data.store.CurrentBookStore
-import voice.core.data.store.FolderPickerMovedDialogShownStore
-import voice.core.data.store.GridModeStore
-import voice.core.featureflag.ExperimentalPlaybackPersistenceQualifier
 import voice.core.featureflag.FeatureFlag
-import voice.core.featureflag.FolderPickerInSettingsFeatureFlagQualifier
-import voice.core.featureflag.KioskModeFeatureFlagQualifier
+import voice.core.kioskmode.KioskModeDemoData
+import voice.core.kioskmode.KioskModeFeatureFlag
+import voice.core.playback.ExperimentalPlaybackPersistenceFeatureFlag
 import voice.core.playback.LivePlaybackState
 import voice.core.playback.PlayerController
 import voice.core.playback.overlay
@@ -43,7 +39,10 @@ import voice.core.playback.playstate.PlayStateManager
 import voice.core.scanner.DeviceHasStoragePermissionBug
 import voice.core.scanner.MediaScanTrigger
 import voice.core.ui.GridCount
+import voice.core.ui.GridMode
+import voice.core.ui.GridModeStore
 import voice.features.bookOverview.di.BookOverviewScope
+import voice.features.bookOverview.survey.Survey
 import voice.navigation.Destination
 import voice.navigation.Navigator
 import kotlin.time.Instant
@@ -55,26 +54,21 @@ class BookOverviewViewModel(
   private val mediaScanner: MediaScanTrigger,
   private val playStateManager: PlayStateManager,
   private val playerController: PlayerController,
-  @CurrentBookStore
-  private val currentBookStoreDataStore: DataStore<BookId?>,
-  @FolderPickerMovedDialogShownStore
-  private val folderPickerMovedDialogShownStore: DataStore<Boolean>,
-  @GridModeStore
-  private val gridModeStore: DataStore<GridMode>,
+  private val currentBookStoreDataStore: CurrentBookStore,
+  private val folderPickerMovedDialogShownStore: FolderPickerMovedDialogShownStore,
+  private val gridModeStore: GridModeStore,
   private val gridCount: GridCount,
   private val navigator: Navigator,
   private val appInfoProvider: AppInfoProvider,
   private val deviceHasStoragePermissionBug: DeviceHasStoragePermissionBug,
-  @FolderPickerInSettingsFeatureFlagQualifier
-  private val folderPickerInSettingsFeatureFlag: FeatureFlag<Boolean>,
-  @ExperimentalPlaybackPersistenceQualifier
-  private val experimentalPlaybackPersistenceFeatureFlag: FeatureFlag<Boolean>,
-  @KioskModeFeatureFlagQualifier
-  private val kioskModeFeatureFlag: FeatureFlag<Boolean>,
+  private val folderPickerInSettingsFeatureFlag: FolderPickerInSettingsFeatureFlag,
+  private val experimentalPlaybackPersistenceFeatureFlag: ExperimentalPlaybackPersistenceFeatureFlag,
+  private val kioskModeFeatureFlag: KioskModeFeatureFlag,
   dispatcherProvider: DispatcherProvider,
   private val serverLibrary: ServerLibrary,
   private val audiobookFolders: AudiobookFolders,
   private val emptyLibraryTracker: EmptyLibraryTracker,
+  private val survey: Survey,
 ) {
 
   private val scope = MainScope(dispatcherProvider)
@@ -115,11 +109,13 @@ class BookOverviewViewModel(
     val hasFoldersWithoutAccess = remember {
       audiobookFolders.withoutAccess().map { folders -> folders.values.any { it.isNotEmpty() } }
     }.collectAsState(initial = null).value
+    val hasSurvey = remember { survey.url().map { it != null } }.collectAsState(initial = null).value
     if (books == null ||
       currentBook == null ||
       folderPickerMovedDialogShown == null ||
       gridMode == null ||
-      hasFoldersWithoutAccess == null
+      hasFoldersWithoutAccess == null ||
+      hasSurvey == null
     ) {
       return BookOverviewViewState.Loading
     }
@@ -179,6 +175,8 @@ class BookOverviewViewModel(
       showSearchIcon = books.isNotEmpty(),
       isLoading = scannerActive,
       showStoragePermissionBugCard = hasStoragePermissionBug,
+      // adding books comes first
+      showSurveyCard = hasSurvey && !showEmptyLibrary,
       showFolderAccessBadge = hasFoldersWithoutAccess,
       showFolderPickerIcon = !folderPickerInSettingsFeatureFlag.get() &&
         !folderPickerMovedDialogShown &&
@@ -210,6 +208,7 @@ class BookOverviewViewModel(
       showSearchIcon = true,
       isLoading = false,
       showStoragePermissionBugCard = false,
+      showSurveyCard = false,
       showFolderAccessBadge = false,
       showFolderPickerIcon = false,
       dialog = null,
@@ -249,6 +248,20 @@ class BookOverviewViewModel(
 
   fun onShowFoldersClick() {
     navigator.goTo(Destination.FolderPicker)
+  }
+
+  fun onSurveyClick() {
+    scope.launch {
+      val url = survey.url().first() ?: return@launch
+      navigator.goTo(Destination.Website(survey.open(url)))
+    }
+  }
+
+  fun onSurveyDismiss() {
+    scope.launch {
+      val url = survey.url().first() ?: return@launch
+      survey.dismiss(url)
+    }
   }
 
   fun onPermissionBugCardClick() {

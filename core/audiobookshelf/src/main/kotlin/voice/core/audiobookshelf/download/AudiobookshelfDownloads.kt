@@ -4,7 +4,6 @@ import android.app.Notification
 import android.content.Context
 import android.content.Intent
 import androidx.core.net.toUri
-import androidx.datastore.core.DataStore
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadRequest
@@ -55,8 +54,7 @@ public class AudiobookshelfDownloads internal constructor(
   private val context: Context,
   private val media: AudiobookshelfMedia,
   private val bookRepository: BookRepository,
-  @PreferencesStore
-  private val preferencesStore: DataStore<Preferences>,
+  private val preferencesStore: PreferencesStore,
   private val notifications: DownloadNotifications,
 ) {
 
@@ -168,7 +166,7 @@ public class AudiobookshelfDownloads internal constructor(
 
   /** The server books that are downloaded, or on their way, by name. */
   public val books: Flow<List<BookDownload>> = tracked.map { tracked ->
-    tracked.values.sortedBy { it.book.content.name.lowercase() }
+    tracked.values.sortedBy { it.book.name.lowercase() }
   }.distinctUntilChanged()
 
   public val usedBytes: Flow<Long> = files.map { files ->
@@ -268,7 +266,7 @@ public class AudiobookshelfDownloads internal constructor(
 
   /** Changes of what the notification shows while books download. */
   internal val foregroundNotificationChanges: Flow<Unit> = tracked
-    .map { tracked -> activeDownloads(tracked.keys).map { it.book.content.name to it.state } }
+    .map { tracked -> activeDownloads(tracked.keys).map { it.book.name to it.state } }
     .distinctUntilChanged()
     .map { }
 

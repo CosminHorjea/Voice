@@ -84,7 +84,7 @@ internal sealed interface BookPlayDialogViewState {
 
     data class ItemViewState(
       val number: Int,
-      val name: String,
+      val name: String?,
       val active: Boolean,
       val time: String,
     )

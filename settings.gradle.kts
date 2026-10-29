@@ -41,12 +41,12 @@ dependencyResolutionManagement {
 }
 
 plugins {
-  id("com.gradle.develocity") version "4.6.0"
+  id("com.gradle.develocity") version "4.6.1"
   id("org.gradle.toolchains.foojay-resolver-convention") version ("1.0.0")
   id("org.jetbrains.kotlin.android") version "2.4.21" apply false
   id("org.jetbrains.kotlin.jvm") version "2.4.21" apply false
-  id("com.android.application") version "9.4.1" apply false
-  id("com.android.library") version "9.4.1" apply false
+  id("com.android.application") version "9.5.0" apply false
+  id("com.android.library") version "9.5.0" apply false
 }
 
 develocity {
@@ -95,7 +95,9 @@ include(":features:support:free")
 include(":features:support:play")
 include(":features:widget")
 include(":core:featureflag")
+include(":core:kioskmode")
 include(":core:audiobookshelf")
 include(":features:audiobookshelf")
 include(":core:snapshot")
 include(":core:foldersync")
+include(":core:datastore")

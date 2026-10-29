@@ -102,7 +102,6 @@ jobs:
           gh release create "${{ steps.tag.outputs.tag }}" \
             artifacts/*.apk \
             --draft \
-            --generate-notes \
             --notes-file .github/release_notes_template.md \
             --target "$GITHUB_SHA"
 

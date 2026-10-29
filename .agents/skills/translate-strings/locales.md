@@ -24,14 +24,14 @@ The four groups are the split for parallel subagents.
 
 | Folder | Language              | Address                                      | Quotes               | Plurals          | Notes                                                                                                                                                                         |
 |--------|-----------------------|----------------------------------------------|----------------------|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| ca     | Catalan               | vós in sentences: Trieu, vostra; singular imperative on buttons: Afegeix, Desa | «…»                  | one, many, other | Progress as S'està baixant…, never a gerund. Voice without an article: amb Voice                                                                                              |
+| ca     | Catalan               | vós in sentences: Trieu, vostra; singular imperative on buttons: Afegeix, Desa | «…»                  | one, many, other | Progress as S'està baixant…, never a gerund. Voice without an article or a gender: amb Voice, de franc (not gratuït), li (not -lo or -la) |
 | es     | Spanish               | tú                                           | «…»                  | one, many, other | Neutral Spanish for Spain and Latin America. Actions in the infinitive: Añadir nota                                                                                           |
 | fr     | French                | vous                                         | « … », spaces inside | one, many, other |                                                                                                                                                                               |
 | it     | Italian               | tu                                           | «…»                  | one, many, other |                                                                                                                                                                               |
 | pt-rBR | Portuguese (Brazil)   | você                                         | “…”                  | one, many, other | Brazilian words: arquivo, celular. BCP 47 `pt-BR` |
 | pt-rPT | Portuguese (Portugal) | formal, without a pronoun: Agite o telemóvel | «…»                  | one, many, other | European words: ficheiro, telemóvel. BCP 47 `pt-PT`                                                                                                                            |
 | ro     | Romanian              | tu: Alege, ta                                | „…”                  | one, few, other  |                                                                                                                                                                               |
-| sc     | Sardinian             | tu: ses, podes, tuo                          | “…”                  | one, other       | Logudorese-leaning LSC: sos/sas, lu, dae, never Campidanese is, ddu. Prosthetic i: ischermu, isvilupu                                                                         |
+| sc     | Sardinian             | tu: ses, podes, tuo                          | “…”                  | one, other       | Logudorese-leaning LSC: sos/sas, lu, dae, never Campidanese is, ddu. Prosthetic i: ischermu, isvilupu. See [Sardinian](#sardinian)                                             |
 
 ## Group C: Slavic, Greek, Hungarian
 
@@ -57,5 +57,27 @@ The four groups are the split for parallel subagents.
 | iw     | Hebrew               | gender-neutral: plural (בחרו, שלכם) or impersonal (ניתן, אפשר)                         | `\"…\"`     | one, two, other | Actions as nouns: הוספת הערה, חיפוש. BCP 47 `he`                                                                                                        |
 | ja     | Japanese             | polite です/ます, no あなた                                                             | 「…」       | other           | Buttons in plain form or as nouns: フィードバックを送る, メモを追加. Full-width ！ and ？. A space around Latin words: Google Play で評価                    |
 | ta     | Tamil                | நீங்கள்: உங்கள்                                                                          | “…”         | one, other      |                                                                                                                                                         |
-| tr     | Turkish              | siz in sentences (bulabilirsiniz, kitaplarınız), bare imperative on buttons (Ekle, Seç) | “…”         | one, other      | Suffixes on Voice take an apostrophe: `Voice\'u`. Known mistakes: sen in sentences (klasörü seç, Aklında ne var?, dinlediğin)                             |
+| tr     | Turkish              | siz in sentences (bulabilirsiniz, kitaplarınız), bare imperative on buttons (Ekle, Seç) | “…”         | one, other      | Suffixes on Voice take an apostrophe: `Voice\'u`                                                                                                          |
 | zh-rCN | Chinese (Simplified) | 您                                                                                      | “…”, 《…》 for book titles | other | Full-width ，。！？. A space between Chinese and Latin words or numbers: 使用 Voice 收听. BCP 47 `zh-CN`                                                    |
+| zh-rTW | Chinese (Traditional, Taiwan) | 你, as Android in Taiwan; never 您 | 「…」, 《…》 for book titles | other | Taiwan words: 檔案, 資料夾, 設定, 伺服器, 新增, 快轉, 倒轉, 小工具. Full-width ，。！？. A space between Chinese and Latin words or numbers. BCP 47 `zh-TW` |
+
+## Sardinian
+
+Models know little Sardinian and fill the gaps with Italian words. A native speaker corrected these in #4014:
+
+- perunu, not nissunu. cada, not onni. como, not immoe. petzi, not isceti. in antis, not prima.
+  deretu a pustis, not luego a pustis.
+- Sardinian words, not Italian ones: balangiare, not guadangiare. mùtzina, not retàllia. parastàgiu, not iscaffale.
+  padente, not foresta. elaboradore, not computer. te, not tè.
+- tzicherone for a cup of tea, tzìchera for a coffee cup. iscutzinare for shaking the phone, iscùdere means to hit.
+- issu and issa only for people. For a thing, use cussu and cussa: “Chene cussu, Voice non podet…”.
+- Mark the accent on words stressed on the third-to-last syllable: càmbia, òrdina, iscùtzina, cùfias, interrùmpidu.
+
+For a word you're unsure of, look up its Italian in Apertium's
+[Sardinian–Italian dictionary](https://raw.githubusercontent.com/apertium/apertium-srd-ita/master/apertium-srd-ita.srd-ita.dix):
+`grep '<r>tazza<s'` finds the Sardinian in `<l>`. Skip entries marked `r="LR"`, those forms aren't preferred. For a UI
+term, search the native speaker's
+[translation memory of open source apps](https://github.com/user-attachments/files/33915708/Sardu-memoria.intrea.tmx.zip):
+`grep -i -A6 '^ *Bookmark added *$'` prints the Sardinian below the English. It mixes in Campidanese and has mistakes,
+so it doesn't override this list. Spelling, accents, pronouns and adverbs follow the
+[official LSC rules](https://www.regione.sardegna.it/documenti/1_72_20060418160308.pdf).

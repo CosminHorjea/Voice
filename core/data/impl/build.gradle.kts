@@ -16,10 +16,6 @@ kotlin {
 
 android {
 
-  defaultConfig {
-    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-  }
-
   sourceSets {
     named("test") {
       assets.directories += "schemas"
@@ -31,7 +27,7 @@ dependencies {
   api(projects.core.data.api)
   api(projects.core.common)
   api(projects.core.documentfile)
-  implementation(projects.core.featureflag)
+  implementation(projects.core.datastore)
 
   implementation(libs.datastore)
   implementation(libs.androidxCore)

@@ -8,7 +8,7 @@ basics stay simple ([#1034]).
 ## Principles
 
 - **Clean, not minimal.** A feature has to make listening better for many listeners, because each one is maintained for
-  years ([FAQ](faq.md)).
+  years ([FAQ](https://voice.woitaschek.de/faq/#why-isnt-feature-xyz-available-in-the-app)).
 - **Good defaults before settings.** Every setting makes Voice a bit harder to use ([#860]).
 - **The data stays with the listener.** No account, no ads, nothing behind a paywall, and no Voice server.
 - **Never interrupt listening.** Prompts wait for a calm moment, ask once, and accept no.
@@ -75,14 +75,16 @@ Listeners find the book they want in seconds and see how far along they are in e
 - **Many books in progress take long to scroll through.** Current is a list or grid, like the other sections.
 - **I can't see how far along I am.** Every book shows its progress.
 - **Finding a book takes too long.** Search finds titles, authors, narrators, series and genres, and can browse by each.
-- **A book's name or cover is wrong.** Rename a book, or pick a cover from a file or the internet.
+- **A book's title, author or cover is wrong.** Edit its title and author, or pick a cover from a file or the
+  internet.
 - **Deleting a book can delete more than I meant.** Voice shows which files go and that they can't be brought back.
 
 **Planned**, see the [library spec](library.md)
 
 - **The books of a series aren't grouped or in order.** A series becomes one stack, its books are in order, and Voice
   offers the next one when a book ends. [#1748]
-- **I can't put my books in the order I want.** Sort by last listened, title, author or recently added. [#1543]
+- **I can't put my books in the order I want.** Sort by progress, title, author or recently added. [#1543]
+- **With thousands of books, I can't go through them by author.** Sorted by author, each author is one stack. [#3946]
 - **Fixing the author means editing the files.** Edit the title, author, series and part in Voice. [#1407]
 - **Removing a book from the library deletes its files.** Hide a book or a series and keep its files. [#3397]
 - **The episodes of a radio play all have the album's name.** Each episode keeps its own title, the album becomes the
@@ -102,6 +104,7 @@ Listeners find the book they want in seconds and see how far along they are in e
 [#2826]: https://github.com/PaulWoitaschek/Voice/discussions/2826
 [#2856]: https://github.com/PaulWoitaschek/Voice/discussions/2856
 [#3397]: https://github.com/PaulWoitaschek/Voice/discussions/3397
+[#3946]: https://github.com/PaulWoitaschek/Voice/discussions/3946
 
 ## Player
 
@@ -245,11 +248,11 @@ no Voice account and no Voice server.
 **Solved**
 
 - **There's no good audiobook app for my server.** Audiobookshelf: stream or download books, with progress and
-  bookmarks kept in step ([docs](audiobookshelf.md)).
+  bookmarks kept in step ([docs](https://voice.woitaschek.de/audiobookshelf/)).
 - **My books in cloud storage can't be added.** Folders from apps that work with Android's folder picker. Syncing the
   folder to the phone works better.
 - **I lose my place when I switch devices.** With Audiobookshelf, or by syncing the library folders with a tool like
-  Syncthing. Voice keeps places, speed, names and bookmarks in a hidden `.voice` folder there ([FAQ](faq.md)).
+  Syncthing. Voice keeps places, speed, names and bookmarks in a hidden `.voice` folder there ([FAQ](https://voice.woitaschek.de/faq/#how-do-i-continue-a-book-on-another-device)).
 - **A new phone means losing my progress.** Android's backup, or the synced library folders. After a restore, the
   library asks to allow access to the folders again.
 
@@ -284,6 +287,8 @@ Voice feels calm day and night and works in the listener's language. Good defaul
   its colors from the cover.
 - **Large fonts or a small window break the layout.** Layouts follow large fonts and right-to-left languages, and the
   play controls stay on screen in a short split screen.
+- **On a tablet everything is stretched across the screen.** Lists stay in a readable column, the player keeps cover
+  and controls together in the middle, and the grid fills the width.
 - **Voice isn't in my language.** A language is added when a listener asks for it.
 
 **Open**
@@ -301,9 +306,9 @@ Listeners who are stuck get help, and listeners who want to give back can, witho
 - **I'm stuck and don't know where to get help.** Settings has the FAQ, getting help, reporting a problem and suggesting
   an idea.
 - **I don't want an audiobook app talking to the internet.** The free build has no Google libraries. The Play build
-  sends crash reports, and analytics only with consent. The [privacy policy](privacy-policy.md) lists what each build
+  sends crash reports, and analytics only with consent. The [privacy policy](../PRIVACY.md) lists what each build
   sends.
-- **I don't know which version to install.** A page compares the [download sources](download-sources.md).
+- **I don't know which version to install.** The website compares [where to get Voice](https://voice.woitaschek.de/#download).
 
 **Open**
 

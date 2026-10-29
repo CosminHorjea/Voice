@@ -1,6 +1,5 @@
 package voice.features.review
 
-import androidx.datastore.core.DataStore
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
@@ -10,14 +9,10 @@ import kotlinx.coroutines.launch
 import voice.core.analytics.api.Analytics
 import voice.core.common.AppInfoProvider
 import voice.core.data.Book
-import voice.core.data.ReviewPromptState
 import voice.core.data.repo.BookRepository
 import voice.core.data.repo.ListeningStatsRepo
 import voice.core.data.repo.ListeningSummary
-import voice.core.data.store.ReviewPromptStateStore
 import voice.core.featureflag.FeatureFlag
-import voice.core.featureflag.ReviewEnabledFeatureFlagQualifier
-import voice.core.featureflag.ReviewPromptForceFeatureFlagQualifier
 import voice.core.playback.playstate.PlayStateManager
 import java.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
@@ -27,18 +22,15 @@ import kotlin.time.toJavaInstant
 @SingleIn(AppScope::class)
 @Inject
 class ReviewPromptController(
-  @ReviewPromptStateStore
-  private val store: DataStore<ReviewPromptState>,
+  private val store: ReviewPromptStateStore,
   private val listeningStatsRepo: ListeningStatsRepo,
   private val bookRepository: BookRepository,
   private val playStateManager: PlayStateManager,
   private val appInfoProvider: AppInfoProvider,
   private val clock: Clock,
   private val analytics: Analytics,
-  @ReviewEnabledFeatureFlagQualifier
-  private val enabled: FeatureFlag<Boolean>,
-  @ReviewPromptForceFeatureFlagQualifier
-  private val force: FeatureFlag<Boolean>,
+  private val enabled: ReviewEnabledFeatureFlag,
+  private val force: ReviewPromptForceFeatureFlag,
   private val scope: CoroutineScope,
 ) {
 
@@ -132,7 +124,7 @@ class ReviewPromptController(
     val headline = when (trigger) {
       is ReviewTrigger.BookFinished -> {
         val book = books.first { it.id == trigger.bookId }
-        ReviewPrompt.Headline.BookFinished(name = book.content.name, cover = book.content.coverUrl)
+        ReviewPrompt.Headline.BookFinished(name = book.name, cover = book.coverUrl)
       }
       is ReviewTrigger.Milestone -> ReviewPrompt.Headline.Milestone
     }
@@ -152,7 +144,7 @@ class ReviewPromptController(
     return ReviewPrompt.Stats(
       listenedHours = maxOf(inLibrary, summary.listened).inWholeHours.toInt().coerceAtLeast(1),
       finishedBooks = started.count { it.position >= it.duration - FINISHED_WITHIN.inWholeMilliseconds },
-      authors = started.mapNotNullTo(mutableSetOf()) { it.content.metadata.author?.trim()?.lowercase()?.ifEmpty { null } }.size,
+      authors = started.mapNotNullTo(mutableSetOf()) { it.author?.trim()?.lowercase()?.ifEmpty { null } }.size,
     )
   }
 

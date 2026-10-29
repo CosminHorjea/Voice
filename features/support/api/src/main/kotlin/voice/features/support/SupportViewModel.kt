@@ -8,13 +8,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.datastore.core.DataStore
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.map
-import voice.core.data.store.SupporterStatusStore
 import voice.core.data.supporter.SupporterStatus
+import voice.core.data.supporter.SupporterStatusStore
 import voice.core.featureflag.FeatureFlag
-import voice.core.featureflag.SupporterNoteFeatureFlagQualifier
 import voice.features.support.SupportViewState.Action
 import voice.features.support.SupportViewState.Content
 import voice.navigation.Navigator
@@ -26,10 +24,8 @@ import java.time.YearMonth
 class SupportViewModel(
   private val backend: SupportBackend,
   private val navigator: Navigator,
-  @SupporterStatusStore
-  private val supporterStatusStore: DataStore<SupporterStatus>,
-  @SupporterNoteFeatureFlagQualifier
-  private val supporterNoteFeatureFlag: FeatureFlag<String>,
+  private val supporterStatusStore: SupporterStatusStore,
+  private val supporterNoteFeatureFlag: SupporterNoteFeatureFlag,
   private val clock: Clock,
 ) : SupportListener {
 

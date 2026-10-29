@@ -28,15 +28,20 @@ import voice.core.data.BookMetadata
 import voice.core.data.Bookmark
 import voice.core.data.Chapter
 import voice.core.data.ChapterId
-import voice.core.data.KioskModeDemoData
+import voice.core.data.CustomMetadata
 import voice.core.data.ListeningEvent
 import voice.core.data.MarkData
 import voice.core.data.repo.BookmarkRepo
-import voice.core.data.sleeptimer.SleepTimerPreference
+import voice.core.data.store.CurrentBookStore
 import voice.core.featureflag.MemoryFeatureFlag
+import voice.core.kioskmode.KioskModeDemoData
+import voice.core.kioskmode.KioskModeFeatureFlag
 import voice.core.playback.CurrentBookResolver
+import voice.core.playback.ExperimentalPlaybackPersistenceFeatureFlag
+import voice.core.playback.LastPlaybackSpeedStore
 import voice.core.playback.LivePlaybackState
 import voice.core.playback.PlayerController
+import voice.core.playback.SeekTimeStore
 import voice.core.playback.history.ListeningHistoryRecorder
 import voice.core.playback.history.PlaybackPosition
 import voice.core.playback.overlay
@@ -44,6 +49,8 @@ import voice.core.playback.playstate.PlayStateManager
 import voice.core.sleeptimer.SleepTimer
 import voice.core.sleeptimer.SleepTimerMode
 import voice.core.sleeptimer.SleepTimerMode.TimedWithDuration
+import voice.core.sleeptimer.SleepTimerPreference
+import voice.core.sleeptimer.SleepTimerPreferenceStore
 import voice.core.sleeptimer.SleepTimerState
 import java.time.Clock
 import java.time.Instant
@@ -118,21 +125,21 @@ class BookPlayViewModelTest {
     },
     sleepTimer = sleepTimer,
     playStateManager = playStateManager,
-    currentBookStoreId = currentBookStoreId,
+    currentBookStoreId = CurrentBookStore(currentBookStoreId),
     navigator = mockk(),
     bookmarkRepository = bookmarkRepository,
     volumeGainFormatter = mockk(),
     batteryOptimization = mockk(),
-    sleepTimerPreferenceStore = sleepTimerDataStore,
-    seekTimeStore = MemoryDataStore(20),
+    sleepTimerPreferenceStore = SleepTimerPreferenceStore(sleepTimerDataStore),
+    seekTimeStore = SeekTimeStore(MemoryDataStore(20)),
     bookId = book.id,
     dispatcherProvider = DispatcherProvider(scope.coroutineContext, scope.coroutineContext, scope.coroutineContext),
-    experimentalPlaybackPersistenceFeatureFlag = MemoryFeatureFlag(false),
-    kioskModeFeatureFlag = MemoryFeatureFlag(false),
+    experimentalPlaybackPersistenceFeatureFlag = ExperimentalPlaybackPersistenceFeatureFlag(MemoryFeatureFlag(false)),
+    kioskModeFeatureFlag = KioskModeFeatureFlag(MemoryFeatureFlag(false)),
     historyRecorder = historyRecorder,
     clock = clock,
     serverLibrary = serverLibrary,
-    lastPlaybackSpeedStore = MemoryDataStore(1F),
+    lastPlaybackSpeedStore = LastPlaybackSpeedStore(MemoryDataStore(1F)),
   )
 
   @Test
@@ -244,7 +251,7 @@ class BookPlayViewModelTest {
         ),
         BookPlayDialogViewState.SelectChapterDialog.ItemViewState(
           number = 3,
-          name = "Final Section",
+          name = null,
           active = false,
           time = "4:00",
         ),
@@ -262,7 +269,7 @@ class BookPlayViewModelTest {
         ),
         BookPlayDialogViewState.SelectChapterDialog.ItemViewState(
           number = 6,
-          name = "Final Section",
+          name = null,
           active = false,
           time = "9:00",
         ),
@@ -528,21 +535,23 @@ class BookPlayViewModelTest {
         every { this@mockk.playStateFlow } returns playStateFlow
         every { playState } returns playStateFlow.value
       },
-      currentBookStoreId = MemoryDataStore(null),
+      currentBookStoreId = CurrentBookStore(MemoryDataStore(null)),
       navigator = mockk(),
       bookmarkRepository = mockk(),
       volumeGainFormatter = mockk(),
       batteryOptimization = mockk(),
-      sleepTimerPreferenceStore = sleepTimerDataStore,
-      seekTimeStore = MemoryDataStore(20),
+      sleepTimerPreferenceStore = SleepTimerPreferenceStore(sleepTimerDataStore),
+      seekTimeStore = SeekTimeStore(MemoryDataStore(20)),
       bookId = book.id,
       dispatcherProvider = DispatcherProvider(scope.coroutineContext, scope.coroutineContext, scope.coroutineContext),
-      experimentalPlaybackPersistenceFeatureFlag = MemoryFeatureFlag(experimentalPlaybackPersistence),
-      kioskModeFeatureFlag = MemoryFeatureFlag(kioskMode),
+      experimentalPlaybackPersistenceFeatureFlag = ExperimentalPlaybackPersistenceFeatureFlag(
+        MemoryFeatureFlag(experimentalPlaybackPersistence),
+      ),
+      kioskModeFeatureFlag = KioskModeFeatureFlag(MemoryFeatureFlag(kioskMode)),
       historyRecorder = historyRecorder,
       clock = clock,
       serverLibrary = serverLibrary,
-      lastPlaybackSpeedStore = MemoryDataStore(lastPlaybackSpeed),
+      lastPlaybackSpeedStore = LastPlaybackSpeedStore(MemoryDataStore(lastPlaybackSpeed)),
     )
   }
 }
@@ -571,6 +580,7 @@ private fun book(
     chapter(),
     chapter(),
   )
+  val id = BookId(Uuid.random().toString())
   return Book(
     content = BookContent(
       positionInChapter = 2.5.minutes.inWholeMilliseconds,
@@ -581,7 +591,7 @@ private fun book(
       isActive = true,
       lastPlayedAt = Instant.ofEpochMilli(lastPlayedAtMillis),
       skipSilence = false,
-      id = BookId(Uuid.random().toString()),
+      id = id,
       gain = 0F,
       metadata = BookMetadata(
         name = name,
@@ -595,10 +605,9 @@ private fun book(
         cover = null,
         fileLastModified = null,
       ),
-      customName = null,
-      customCover = null,
     ),
     chapters = chapters,
+    custom = CustomMetadata(id),
   )
 }
 
@@ -610,7 +619,7 @@ private fun chapter(): Chapter {
     markData = listOf(
       MarkData(startMs = 0L, name = "Chapter Start"),
       MarkData(startMs = 2.minutes.inWholeMilliseconds, name = "Middle Section"),
-      MarkData(startMs = 4.minutes.inWholeMilliseconds, name = "Final Section"),
+      MarkData(startMs = 4.minutes.inWholeMilliseconds, name = " "),
     ),
     name = "name",
     fileSize = 0,

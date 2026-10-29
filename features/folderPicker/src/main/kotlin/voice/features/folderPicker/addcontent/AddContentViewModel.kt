@@ -5,12 +5,13 @@ import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.launch
+import voice.core.analytics.api.Analytics
+import voice.core.audiobookshelf.AudiobookshelfFeatureFlag
 import voice.core.audiobookshelf.ServerLibrary
 import voice.core.common.DispatcherProvider
 import voice.core.common.MainScope
 import voice.core.data.folders.AudiobookFolders
 import voice.core.data.folders.FolderType
-import voice.core.featureflag.AudiobookshelfFeatureFlagQualifier
 import voice.core.featureflag.FeatureFlag
 import voice.features.folderPicker.folderPicker.FileTypeSelection
 import voice.navigation.Destination
@@ -23,9 +24,9 @@ import voice.navigation.Origin
 class AddContentViewModel(
   private val audiobookFolders: AudiobookFolders,
   private val navigator: Navigator,
-  @AudiobookshelfFeatureFlagQualifier
-  private val audiobookshelfFeatureFlag: FeatureFlag<Boolean>,
+  private val audiobookshelfFeatureFlag: AudiobookshelfFeatureFlag,
   private val serverLibrary: ServerLibrary,
+  private val analytics: Analytics,
   dispatcherProvider: DispatcherProvider,
   @Assisted
   private val origin: Origin,
@@ -59,6 +60,10 @@ class AddContentViewModel(
   }
 
   internal val canConnectAudiobookshelf: Boolean get() = audiobookshelfFeatureFlag.get()
+
+  internal fun onFolderPickerCancel() {
+    analytics.event("folder_picker_cancelled")
+  }
 
   private val scope = MainScope(dispatcherProvider)
 

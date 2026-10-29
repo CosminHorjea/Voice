@@ -17,6 +17,7 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.verifyOrder
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -24,6 +25,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.runner.RunWith
 import org.robolectric.Shadows.shadowOf
+import voice.core.analytics.api.Analytics
 import voice.core.data.Book
 import voice.core.data.BookContent
 import voice.core.data.BookId
@@ -33,10 +35,17 @@ import voice.core.data.ChapterMark
 import voice.core.data.ListeningEvent
 import voice.core.data.MarkData
 import voice.core.data.repo.ListeningHistoryRepo
+import voice.core.data.store.CurrentBookStore
+import voice.core.playback.AutoRewindAmountStore
+import voice.core.playback.LastPlaybackSpeedStore
 import voice.core.playback.MemoryDataStore
+import voice.core.playback.SeekTimeStore
 import voice.core.playback.history.CommandSourceResolver
 import voice.core.playback.history.ListeningHistoryRecorder
 import voice.core.playback.history.PlaybackPosition
+import voice.core.playback.misc.Decibel
+import voice.core.playback.misc.VolumeGain
+import voice.core.playback.misc.VolumeGainSetter
 import voice.core.playback.session.MediaItemProvider
 import voice.core.playback.session.realChapterId
 import voice.core.playback.session.search.book
@@ -53,6 +62,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 import kotlin.uuid.Uuid
 
 @RunWith(AndroidJUnit4::class)
@@ -88,7 +98,7 @@ class VoicePlayerTest {
     .build()
 
   private val scope = TestScope()
-  private val mediaItemProvider = MediaItemProvider(mockk(), mockk(), mockk(), mockk(), mockk(), mockk())
+  private val mediaItemProvider = MediaItemProvider(mockk(), mockk(), mockk(), mockk(), mockk())
   private val bookId = BookId(Uuid.random().toString())
   private val currentBookStore = MemoryDataStore<BookId?>(bookId)
   private lateinit var currentBook: Book
@@ -97,6 +107,7 @@ class VoicePlayerTest {
   private val historyRepo = mockk<ListeningHistoryRepo> {
     coEvery { add(capture(historyEvents)) } just Runs
   }
+  private val analytics = mockk<Analytics>(relaxUnitFun = true)
   private val chapterMarkPlayer = ChapterMarkPlayer(internalPlayer, mediaItemProvider)
   private val player = VoicePlayer(
     player = chapterMarkPlayer,
@@ -106,14 +117,14 @@ class VoicePlayerTest {
         currentBook = currentBook.update(secondArg<(BookContent) -> BookContent>())
       }
     },
-    currentBookStoreId = currentBookStore,
-    seekTimeStore = seekTimeStore,
-    autoRewindAmountStore = autoRewindAmountStore,
-    lastPlaybackSpeedStore = lastPlaybackSpeedStore,
+    currentBookStoreId = CurrentBookStore(currentBookStore),
+    seekTimeStore = SeekTimeStore(seekTimeStore),
+    autoRewindAmountStore = AutoRewindAmountStore(autoRewindAmountStore),
+    lastPlaybackSpeedStore = LastPlaybackSpeedStore(lastPlaybackSpeedStore),
     scope = scope,
-    volumeGain = mockk(relaxed = true),
+    volumeGain = VolumeGain(VolumeGainSetter()),
     sleepTimer = sleepTimer,
-    analytics = mockk(relaxed = true),
+    analytics = analytics,
     historyRecorder = ListeningHistoryRecorder(
       repo = historyRepo,
       clock = Clock.fixed(Instant.parse("2026-10-07T10:00:00Z"), ZoneOffset.UTC),
@@ -383,6 +394,20 @@ class VoicePlayerTest {
   }
 
   @Test
+  fun `playing tells whether volume boost is on`() = scope.runTest {
+    setMediaItems(listOf(chapter(ChapterMark(startMs = 0, endMs = 20_000, name = null))), gain = 3F)
+
+    player.play()
+    player.setGain(Decibel.Zero)
+    player.play()
+
+    verifyOrder {
+      analytics.event("play", mapOf("volume_boost" to "on"))
+      analytics.event("play", mapOf("volume_boost" to "off"))
+    }
+  }
+
+  @Test
   fun `end of chapter sleep timer pauses at start of next chapter mark`() = scope.runTest {
     setMediaItems(
       listOf(
@@ -626,6 +651,44 @@ class VoicePlayerTest {
   }
 
   @Test
+  fun `seeking back crosses into the previous chapter mark`() = scope.runTest {
+    setMediaItems(
+      listOf(
+        chapter(
+          ChapterMark(startMs = 0, endMs = 11_999, name = null),
+          ChapterMark(startMs = 12_000, endMs = 20_000, name = null),
+        ),
+      ),
+    )
+    player.seekTo(1, 3_000)
+    player.prepare()
+    awaitReady()
+
+    player.seekBackBy(10.seconds, crossMediaItems = true)
+
+    player.shouldHavePosition(0, 4_999)
+  }
+
+  @Test
+  fun `seeking back past the start of the book stops at its start`() = scope.runTest {
+    setMediaItems(
+      listOf(
+        chapter(
+          ChapterMark(startMs = 0, endMs = 11_999, name = null),
+          ChapterMark(startMs = 12_000, endMs = 20_000, name = null),
+        ),
+      ),
+    )
+    player.seekTo(1, 3_000)
+    player.prepare()
+    awaitReady()
+
+    player.seekBackBy(30.seconds, crossMediaItems = true)
+
+    player.shouldHavePosition(0, 0)
+  }
+
+  @Test
   fun `pausing while already paused does not rewind again`() = scope.runTest {
     setMediaItems(listOf(chapter(ChapterMark(startMs = 0, endMs = 20_000, name = null))))
     autoRewindAmountStore.updateData { 5 }
@@ -640,6 +703,22 @@ class VoicePlayerTest {
 
     player.pause()
     player.shouldHavePosition(0, 10_000)
+  }
+
+  @Test
+  fun `pausing a finished book keeps it at its end`() = scope.runTest {
+    setMediaItems(listOf(chapter(ChapterMark(startMs = 0, endMs = 10_000, name = null))))
+    autoRewindAmountStore.updateData { 5 }
+
+    player.seekTo(0, 9_000)
+    player.prepare()
+    awaitReady()
+    TestPlayerRunHelper.play(internalPlayer).untilState(Player.STATE_ENDED)
+
+    player.pause()
+    shadowOf(Looper.getMainLooper()).idle()
+
+    player.shouldHavePosition(0, player.duration)
   }
 
   @Test
@@ -668,6 +747,7 @@ class VoicePlayerTest {
     positionInChapter: Long = 0,
     playbackSpeed: Float = 1F,
     lastPlayedAt: Instant = Instant.EPOCH,
+    gain: Float = 0F,
   ) {
     currentBook = book(chapters, bookId).update {
       it.copy(
@@ -675,6 +755,7 @@ class VoicePlayerTest {
         positionInChapter = positionInChapter,
         playbackSpeed = playbackSpeed,
         lastPlayedAt = lastPlayedAt,
+        gain = gain,
       )
     }
     player.setMediaItem(mediaItemProvider.mediaItem(currentBook))
