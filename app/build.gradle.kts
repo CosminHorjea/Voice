@@ -78,6 +78,7 @@ android {
     }
     getByName("debug") {
       isMinifyEnabled = false
+      applicationIdSuffix = ".debug"
     }
     all {
       if (appSigningConfig != null) {
